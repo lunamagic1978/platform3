@@ -1,0 +1,194 @@
+{% extends 'apibase.html' %}
+
+{% block head_script %}
+
+{{ formset.media }}
+{% endblock %}
+
+{% block breadcrumb_button %}
+    <li><a href="{% url 'api_home' %}">接口平台</a></li>
+    <li ><a href="/api/project{{ project_obj.id }}">{{ project_obj.name }}</a></li>
+    <li class="active">{{ api_obj.apiName }}</li>
+    <a href="/api/project{{ project_obj.id }}/api{{ api_obj.id }}/test" class="btn btn-primary btn-xs " role="button" style="float: right; margin-right: 150px">测试</a>
+    <a href="/api/project{{ project_obj.id }}/api{{ api_obj.id }}/debug" class="btn btn-default btn-xs " role="button" style="float: right; margin-right: 10px">调试</a>
+    <a href="/api/project{{ project_obj.id }}/api{{ api_obj.id }}/doc" class="btn btn-default btn-xs " role="button" style="float: right; margin-right: 10px">文档</a>
+{% endblock %}
+
+{% block api_home_content %}
+<div class="container">
+        <div class="col-sm-1 col-sm-offset-1">
+            <div class="col-sm-4">{{ debugEnv.env }}</div>
+        </div>
+
+        <div class="col-sm-7 ">
+            <div class="input-group">
+            <span class="input-group-addon" id="basic-addon1">{{ api_obj.request_method }}</span>
+            <input type="text" class="form-control col-sm-4 " aria-activedescendant="basic-addon1" value="{{ api_obj.request_protocol }}://{{ project_obj.host }}:{{ project_obj.port }}{{ api_obj.url }}" readonly="readonly" style="background-color: white">
+            </div>
+        </div>
+    <div>
+    <form method="post" action="" class="form-horizontal">
+    {% csrf_token %}
+        <table border="1" class="table table-striped table-bordered table-hover table-condensed table-responsive" id="tableCase">
+            <tr>
+                <td></td>
+                <td colspan="{{ params_len }}" style="text-align: center">params</td>
+                <td colspan="{{ result_len }}" style="text-align: center">result</td>
+                <td>delete</td>
+            </tr>
+
+            <tr>
+                <td rowspan="2" style="width: 30px; word-wrap: break-word">case</td>
+                {% for item in api_params %}
+                <td rowspan="2" style="min-width: 30px; max-width: 60px; word-wrap: break-word">{{ item.key }}</td>
+                {% endfor %}
+                {% for item in expect_key %}
+                    <td style="min-width: 30px; max-width: 60px; word-wrap: break-word">{{ item }}</td>
+                {% endfor %}
+                <td></td>
+            </tr>
+
+            <tr>
+                {% for item in expect_key_type %}
+                <td>{{  item  }}</td>
+                {% endfor %}
+                <td></td>
+            </tr>
+
+            {{  formset.management_form }}
+            {% for form in formset %}
+            <tr>
+                <td rowspan="3" style="min-width: 10px; max-width: 20px; word-wrap: break-word;">{{  form.ORDER }}</td>
+                {% for item in form %}
+                    {% ifequal  item.name|slice:":5" "param" %}
+
+                            <td rowspan="3" style="min-width: 20px; max-width: 65px; word-wrap: break-word">{{ item }}</td>
+                    {% endifequal %}
+
+                {% endfor %}
+
+
+                <td style="min-width: 30px; max-width: 60px; word-wrap: break-word">{{form.result_expect_code}}</td>
+                <td style="min-width: 30px; max-width: 60px; word-wrap: break-word">{{form.result_expect_time}}</td>
+
+
+                {% for item in form %}
+                    {% ifequal  item.name|slice:":15" "result_expect_v" %}
+
+                            <td style="min-width: 30px; max-width: 65px; word-wrap: break-word">{{ item }}</td>
+                    {% endifequal %}
+
+                {% endfor %}
+                <td>
+                    {{ form.DELETE }}
+                </td>
+            </tr>
+            <tr>
+                {% for item in form %}
+                    {% ifequal  item.name|slice:":18" "result_judge_logic" %}
+
+                            <td>{{ item }}</td>
+                    {% endifequal %}
+
+                {% endfor %}
+                <td></td>
+
+            </tr>
+
+
+            <tr>
+                <td style="min-width: 30px; max-width: 60px; word-wrap: break-word">{{form.result_response_code}}</td>
+                <td style="min-width: 30px; max-width: 60px; word-wrap: break-word">{{form.result_response_time}}</td>
+                {% for item in form %}
+                    {% ifequal  item.name|slice:":17" "result_response_v" %}
+
+                            <td style="min-width: 30px; max-width: 65px; word-wrap: break-word">{{ item }}</td>
+                    {% endifequal %}
+
+                {% endfor %}
+                <td></td>
+
+            </tr>
+            {% endfor %}
+
+        </table>
+        <input class="btn btn-danger btn-xs" type="button" value="add" id="add" onclick="addCase()">
+        <input class="btn btn-primary btn-xs" type="submit" value="save" name="testcasesave" id="testcasesave">
+        <input class="btn btn-default btn-xs" type="submit" value="exec" name="exec" id="exec">
+
+    </form>
+    </div>
+</div>
+
+
+<script>
+    function addCase() {
+
+        var count = $('#id_form-TOTAL_FORMS').attr("value");
+        var smaple_tr1 = $('#tableCase').find('tr');
+        var html_tr1 =  smaple_tr1.eq(3).clone(true);
+        var html_tr2 =  smaple_tr1.eq(4).clone(true);
+        var html_tr3 =  smaple_tr1.eq(5).clone(true);
+        var form_num =  smaple_tr1.length/3;
+
+        html_tr1.find('input').each(function () {
+            var name = $(this).attr('name');
+            var new_name = name.replace(0, form_num-1);
+            var id_form = $(this).attr('id');
+            var new_id_form = id_form.replace(0, form_num-1);
+
+            console.log(name);
+            console.log(new_name);
+            $(this).attr('name', new_name);
+            $(this).attr('id', new_id_form);
+            $(this).attr('value', '');
+            
+            var ord_flag = isContains(new_name, 'ORDER')
+            
+            if ( ord_flag ){
+                $(this).attr('value', form_num);
+            }
+        }
+        );
+
+        html_tr2.find('select').each(function () {
+            var name = $(this).attr('name');
+            var new_name = name.replace(0, form_num-1);
+            var id_form = $(this).attr('id');
+            var new_id_form = id_form.replace(0, form_num-1);
+
+            $(this).attr('name', new_name);
+            $(this).attr('id', new_id_form);
+            $(this).attr('value', '');
+            $(this).attr('style', 'width:100%;');
+        }
+        );
+
+        html_tr3.find('input').each(function () {
+            var name = $(this).attr('name');
+            var new_name = name.replace(0, form_num-1);
+            var id_form = $(this).attr('id');
+            var new_id_form = id_form.replace(0, form_num-1);
+
+            $(this).attr('name', new_name);
+            $(this).attr('id', new_id_form);
+            $(this).attr('value', '');
+            $(this).attr('style', 'width:100%;');
+        }
+        );
+
+        $('#tableCase').append(html_tr1);
+        $('#tableCase').append(html_tr2);
+        $('#tableCase').append(html_tr3);
+
+        $('#id_form-TOTAL_FORMS').attr("value",parseInt(count)+1);
+
+    }
+    
+    function isContains(str, substr) {
+        return str.indexOf(substr) >= 0;
+    }
+</script>
+
+
+{% endblock %}

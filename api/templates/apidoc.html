@@ -1,0 +1,165 @@
+{% extends 'apibase.html' %}
+
+{% block breadcrumb_button %}
+    <li><a href="{% url 'api_home' %}">接口平台</a></li>
+    <li ><a href="/api/project{{ project_obj.id }}">{{ project_obj.name }}</a></li>
+    <li class="active">{{ api_obj.apiName }}</li>
+    <a href="/api/project{{ project_obj.id }}/api{{ api_obj.id }}/test" class="btn btn-default btn-xs " role="button" style="float: right; margin-right: 150px">测试</a>
+    <a href="/api/project{{ project_obj.id }}/api{{ api_obj.id }}/debug" class="btn btn-default btn-xs " role="button" style="float: right; margin-right: 10px">调试</a>
+    <a href="/api/project{{ project_obj.id }}/api{{ api_obj.id }}/doc" class="btn btn-primary btn-xs " role="button" style="float: right; margin-right: 10px">文档</a>
+{% endblock %}
+
+{% block api_home_content %}
+
+
+
+
+    <div class="container" >
+            <label class="col-sm-2 control-label text-right ">
+                <h5>接口功能：</h5>
+            </label>
+
+            <label class="col-sm-5">
+                <h5>{{ api_obj.apiName }}</h5>
+            </label>
+    </div>
+    <div class="container" >
+            <label class="col-sm-2 control-label text-right ">
+                <h5>请求地址：</h5>
+            </label>
+            <h5>{{ api_obj.request_protocol }}://{{ project_obj.host }}{{ api_obj.url }}</h5>
+    </div>
+
+    <div class="container" >
+            <label class="col-sm-2 control-label text-right ">
+                <h5>请求方式：</h5>
+            </label>
+            <h5>{{ api_obj.request_method }}</h5>
+    </div>
+
+    <div class="container" >
+            <label class="col-sm-2 control-label text-right ">
+                <h5>简单调用实例：</h5>
+            </label>
+            <h5>{{ api_detail.debug_sample }}</h5>
+    </div>
+
+    <div style="padding-left: 235px">
+    <h5>接口Params：</h5>
+    </div>
+
+
+    <div class="container" style="padding-left: 100px">
+        <form action="" method="post">
+        {{ ApiParamsInlineForm.management_form }}
+        <table border="1" class="table table-striped table-bordered table-hover table-condensed table-responsive" id="tableParams">
+            <tr>
+                <td style="text-align: center">字段</td>
+                <td style="text-align: center">类型</td>
+                <td style="text-align: center">必选</td>
+                <td style="text-align: center">描述</td>
+                <td style="text-align: center">默认值</td>
+                <td style="text-align: center">删除</td>
+            </tr>
+
+
+            {% for item in ApiParamsInlineForm %}
+                <div style="display: none"> {{ item.id }}</div>
+                <tr>
+                    <td>{{ item.key }}</td>
+                    <td>{{ item.key_type }}</td>
+                    <td>{{ item.key_must }}</td>
+                    <td>{{ item.key_description }}</td>
+                    <td>{{ item.key_default }}</td>
+                    <td>{{ item.DELETE }}</td>
+                </tr>
+
+            {% endfor %}
+
+
+        </table>
+        <input class="btn btn-danger btn-xs" type="button" value="添加" onclick="addParams()">
+        <input class="btn btn-primary btn-xs" type="submit" value="保存" name="saveParams">
+        {% csrf_token %}
+        </form>
+    </div>
+
+
+    <div style="padding-left: 230px">
+    <h5>接口Bodys：</h5>
+    </div>
+
+
+    <div class="container" style="padding-left: 100px">
+        <form action="" method="post">
+        {{ ApiBodyInlineForm.management_form }}
+        <table border="1" class="table table-striped table-bordered table-hover table-condensed table-responsive" id="tableBodys">
+            <tr>
+                <td style="text-align: center">字段</td>
+                <td style="text-align: center">类型</td>
+                <td style="text-align: center">必选</td>
+                <td style="text-align: center">描述</td>
+                <td style="text-align: center">默认值</td>
+                <td style="text-align: center">删除</td>
+            </tr>
+
+
+            {% for item in ApiBodyInlineForm %}
+                <div style="display: none"> {{ item.id }}</div>
+                <tr>
+                    <td>{{ item.body }}</td>
+                    <td>{{ item.body_type }}</td>
+                    <td>{{ item.body_must }}</td>
+                    <td>{{ item.body_description }}</td>
+                    <td>{{ item.body_default }}</td>
+                    <td>{{ item.DELETE }}</td>
+                </tr>
+
+            {% endfor %}
+
+
+        </table>
+        <input class="btn btn-danger btn-xs" type="button" value="添加" onclick="addBodys()">
+        <input class="btn btn-primary btn-xs" type="submit" value="保存" name="saveBodys">
+        {% csrf_token %}
+        </form>
+    </div>
+
+    <script>
+        function addParams() {
+            var count = $('#id_apiparams_set-TOTAL_FORMS').attr("value");
+            var checkboxObject = $('#id_apiparams_set-0-key_type').html();
+
+            $('#tableParams').append(
+                '<tr>' +
+                '<td><input type="text" name="apiparams_set-'+ count + '-key"  style="border:none; width:100%;" id="id_apiparams_set-'+ count + '-key" maxlength="1000" /></td>' +
+                '<td><select name="apiparams_set-'+ count + '-key_type" style="border:none; width:100%;" id="id_apiparams_set-'+ count + '-key_type">'+ checkboxObject +'</td>' +
+                '<td><input type="checkbox" name="apiparams_set-'+ count + '-key_must" id="id_apiparams_set-'+ count + '-key_must" /></td>' +
+                '<td><input type="text" name="apiparams_set-'+ count + '-key_description"  style="border:none; width:100%;" id="id_apiparams_set-'+ count + '-key_description" maxlength="1000" /></td>' +
+                '<td><input type="text" name="apiparams_set-'+ count + '-key_default"  style="border:none; width:100%;" id="id_apiparams_set-'+ count + '-key_default" maxlength="1000" /></td>' +
+                '<td><input type="checkbox" name="apiparams_set-'+ count + '-DELETE" id="id_apiparams_set-'+ count + '-DELETE" /></td>' +
+                '</tr>');
+            $('#id_apiparams_set-TOTAL_FORMS').attr("value",parseInt(count)+1);
+        }
+    </script>
+
+
+    <script>
+        function addBodys() {
+            var count = $('#id_apibody_set-TOTAL_FORMS').attr("value");
+            var checkboxObject = $('#id_apibody_set-0-body_type').html()
+
+            $('#tableBodys').append(
+                '<tr>' +
+                '<td><input type="text" name="apibody_set-'+ count + '-body" id="id_apibody_set-'+ count + '-body" style="border:none; width:100%;" maxlength="1000" /></td>' +
+                '<td><select name="apibody_set-'+ count + '-body_type" style="border:none; width:100%;" id="id_apibody_set-'+ count + '-body_type">'+ checkboxObject +'</td>' +
+                '<td><input type="checkbox" name="apibody_set-'+ count + '-body_must" checked id="id_apibody_set-'+ count + '-body_must" /></td>' +
+                '<td><input type="text" name="apibody_set-'+ count + '-body_description" id="id_apibody_set-'+ count + '-body_description" style="border:none; width:100%;" maxlength="1000" /></td>' +
+                '<td><input type="text" name="apibody_set-'+ count + '-body_default" id="id_apibody_set-'+ count + '-body_default" style="border:none; width:100%;" maxlength="1000" /></td>' +
+                '<td><input type="checkbox" name="apibody_set-'+ count + '-DELETE" id="id_apibody_set-'+ count + '-DELETE" /></td>' +
+                '</tr>');
+            $('#id_apibody_set-TOTAL_FORMS').attr("value",parseInt(count)+1);
+        }
+    </script>
+
+{% endblock %}

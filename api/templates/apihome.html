@@ -1,0 +1,75 @@
+{% extends 'apibase.html' %}
+{% block breadcrumb_button %}
+    <li class="active">接口平台</li>
+    <input class="btn btn-primary btn-xs" type="button" value="添加新项目" style="display: inline;float: right;
+    margin-right: 200px" onclick="displayCreate()">
+{% endblock %}
+{% block api_home_content %}
+
+
+
+    <ul class="list-group">
+        {% for item in displayList %}
+            <div class="list-group-item" style="margin-left: 250px; margin-right: 250px">
+                <a href="/api/project{{ item.id }}"  >
+                    {{ item.name }}
+                </a>
+                <div>
+                    {{ item.host }}:{{ item.port }}
+                </div>
+            </div>
+
+
+
+    {%  endfor %}
+
+    </ul>
+
+    <div id="createProject" style="width: 100%; height: 100%; background-color: rgba(0,0,0,0.3); position: fixed;
+    top: 0; left: 0; display: none; justify-content: center; align-content: center; align-items: center;
+    z-index: 9999;">
+        <div style="border-radius: 5px; background-color: #fff; max-width: 600px; min-width: 200px; padding: 30px 20px;" ／
+        class="container">
+            <form method="post" action="" class="form-horizontal">
+                <h3 style="text-align: center">添加新项目</h3>
+                <div class="form-group" style="margin-top: 40px">
+                    <label class="col-sm-3 control-label">项目名:</label>
+                    <div class="col-sm-7">
+                        <input type="text" class="form-control" id="id_name" name="name">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">host:</label>
+                    <div class="col-sm-7">
+                        <input type="text" class="form-control" id="id_host" name="host">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">port:</label>
+                    <div class="col-sm-7">
+                        <input type="text" class="form-control" id="id_port" name="port">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-2 col-sm-offset-7">
+                        <input type="submit" class="form-control btn btn-default" value="取消" name="canncl_createProject">
+                    </div>
+                    <div class="col-sm-2">
+                        <input type="submit" class="form-control btn btn-primary" value="确定" name="submit_createProject">
+                    </div>
+                </div>
+                {% csrf_token %}
+            </form>
+        </div>
+    </div>
+    <script>
+        function displayCreate() {
+            $('#createProject').css({display:'flex'});
+        }
+
+    </script>
+{% endblock %}
+

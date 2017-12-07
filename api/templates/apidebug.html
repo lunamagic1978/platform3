@@ -1,0 +1,147 @@
+{% extends 'apibase.html' %}
+
+
+{% block head_script %}
+	<link href="{{ STATIC_URL }}css/jsonTree.css" rel="stylesheet">
+    <script src="{{ STATIC_URL }}js/jsonTree.js"></script>
+{% endblock %}
+
+{% block breadcrumb_button %}
+    <li><a href="{% url 'api_home' %}">接口平台</a></li>
+    <li ><a href="/api/project{{ project_obj.id }}">{{ project_obj.name }}</a></li>
+    <li class="active">{{ api_obj.apiName }}</li>
+    <a href="/api/project{{ project_obj.id }}/api{{ api_obj.id }}/test" class="btn btn-default btn-xs " role="button" style="float: right; margin-right: 150px">测试</a>
+    <a href="/api/project{{ project_obj.id }}/api{{ api_obj.id }}/debug" class="btn btn-primary btn-xs " role="button" style="float: right; margin-right: 10px">调试</a>
+    <a href="/api/project{{ project_obj.id }}/api{{ api_obj.id }}/doc" class="btn btn-default btn-xs " role="button" style="float: right; margin-right: 10px">文档</a>
+{% endblock %}
+
+{% block api_home_content %}
+<div class="container">
+<form method="post" action="" class="form-horizontal">
+    {% csrf_token %}
+
+    <div class="form-group">
+        <div class="col-sm-1 col-sm-offset-1">
+            <div class="col-sm-4">{{ debugEnv.env }}</div>
+        </div>
+
+
+
+        <div class="col-sm-7 ">
+            <div class="input-group">
+            <span class="input-group-addon" id="basic-addon1">{{ api_obj.request_method }}</span>
+            <input type="text" class="form-control col-sm-4 " aria-activedescendant="basic-addon1" value="{{ api_obj.request_protocol }}://{{ project_obj.host }}:{{ project_obj.port }}{{ api_obj.url }}" readonly="readonly" style="background-color: white">
+            </div>
+        </div>
+
+        <input class="btn btn-primary col-sm-1 " type="submit" value="DEBUG" name="debug" id="debug">
+    </div>
+
+
+    <div class="form-group">
+        <div class="row">
+        <div class="btn-group col-sm-2 col-sm-offset-1">
+              <button type="button" class="btn btn-info btn-xs">Headers</button>
+              <button type="button" class="btn btn-info dropdown-toggle btn-xs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="caret"></span>
+                <span class="sr-only">Toggle Dropdown</span>
+              </button>
+        </div>
+        </div>
+    </div>
+
+
+    <div class="form-group">
+        <div class="row">
+
+            <div class="btn-group col-sm-2 col-sm-offset-1">
+                  <button type="button" class="btn btn-info btn-xs">Params</button>
+                  <button type="button" class="btn btn-info dropdown-toggle btn-xs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="caret"></span>
+                    <span class="sr-only">Toggle Dropdown</span>
+                  </button>
+            </div>
+        </div>
+
+            <div  style="margin-top: 10px">
+                {{ CustomApiParamsInlineForm.management_form }}
+                {% for item in CustomApiParamsInlineForm %}
+                    <div class="row">
+                        {{ item.id }}
+                        <div class="col-sm-1 col-sm-offset-1 control-label">{{ item.key_value.label }}:</div>
+                        <div class="col-sm-5">{{ item.key_value }}</div>
+
+                        <div hidden>
+
+                            {{ item.key }}
+                        </div>
+                    </div>
+
+                {% endfor %}
+            </div>
+
+    </div>
+
+    <div class="form-group">
+        <div class="row">
+        <div class="btn-group col-sm-2 col-sm-offset-1">
+              <button type="button" class="btn btn-info btn-xs">Bodys</button>
+              <button type="button" class="btn btn-info dropdown-toggle btn-xs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="caret"></span>
+                <span class="sr-only">Toggle Dropdown</span>
+              </button>
+        </div>
+        </div>
+    </div>
+</form>
+
+<div class="col-sm-2 ">
+<h4>Response_content</h4>
+
+</div>
+<div class="col-sm-2">
+    <input type="button" class="btn btn-primary btn-xs" value="全部展开" onclick="treeexpand()">
+</div>
+
+    <div id="wrapper" class="col-sm-12">
+
+    </div>
+
+</div>
+
+
+
+
+
+    <script>
+            // Get DOM-element for inserting json-tree
+            var wrapper = document.getElementById("wrapper");
+
+            // Get json-data by javascript-object
+            var data = {
+            };
+
+            // or from a string by JSON.parse(str) method
+            var dataStr = {{ response_data|safe }};
+            dataStr = JSON.stringify(dataStr);
+            console.log(dataStr)
+            try {
+                var data = JSON.parse(dataStr);
+            } catch (e) {}
+
+            // Create json-tree
+            var tree = jsonTree.create(data, wrapper);
+
+            // Expand all (or selected) child nodes of root (optional)
+            tree.expand(function(node) {
+               return node.childNodes.length < 2 || node.label === 'phoneNumbers';
+            })
+
+            function treeexpand() {
+                tree.expand()
+            }
+
+    </script>
+
+
+{% endblock %}

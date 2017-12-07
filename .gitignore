@@ -7,4 +7,5 @@
 .idea/workspace.xml
 manage.py
 platform3/settings.py
+api/migrations/
 

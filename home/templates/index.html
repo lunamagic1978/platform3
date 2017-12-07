@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {% load bootstrap3 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+    <title>什么值得买</title>
+</head>
+<body role="document">
+<!--导航栏-->
+<nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="/index/">什么值得买测试工具平台</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+            <ul class="nav navbar-right navbar-nav">
+                <li><a href="#">{{ user }}</a> </li>
+                <li><a href="/logout/">退出</a> </li>
+            </ul>
+        </div>
+    </div>
+
+</nav>
+
+<!--功能列表-->
+<div>
+    <ol class="breadcrumb" style="padding-top: 60px; padding-left: 200px">
+        <li><a href="/index/">首页</a></li>
+    </ol>
+</div>
+
+<div style="padding-left: 200px">
+    <a href="{% url 'api_home' %}">接口平台</a>
+</div>
+
+</body>
+</html>
