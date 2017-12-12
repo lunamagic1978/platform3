@@ -34,6 +34,7 @@ class requestHandle():
             url = self.request_protocol + "://" + "180.150.179.230" + ":" + self.port + self.url
 
         response_data = requests.request(method=self.request_method, url=url, params=self.params, headers=headers)
+        print(response_data.content)
         return response_data
 
 

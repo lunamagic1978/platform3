@@ -35,7 +35,7 @@ def apihome(request):
                 port = temp['port']
                 obj = project.objects.create(name=name, port=port, host=host)
                 obj.save()
-            return HttpResponseRedirect("apihome")
+            return HttpResponseRedirect("/api/home")
 
         if "canncl_createProject" in request.POST:
             logging.debug("创建项目的操作 取消")
