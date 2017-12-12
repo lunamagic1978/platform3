@@ -3,15 +3,18 @@ from __future__ import unicode_literals
 
 import logging
 
-from api.lib import request_handle, testcase_handle
+from api.lib import request_handle, testcase_handle, script_handle
 from django.contrib.auth.decorators import login_required
 from django.forms import TextInput, Select
-from django.forms import inlineformset_factory, formset_factory
+from django.forms import inlineformset_factory, formset_factory, modelformset_factory
 from django.http import *
 from django.shortcuts import render
+import os
+import datetime
 
 from .form import createProject, createApi, DebugEnv, CustomInlineFormSet, ExpectKey, Case, ORDER_FIXED, ExpectKey_Type
-from .models import project, apiList, ApiDetail, ApiBody, ApiParams, ApiTest
+from .form import Script
+from .models import project, apiList, ApiDetail, ApiBody, ApiParams, ApiTest, ApiScript
 
 
 # Create your views here.
@@ -219,11 +222,15 @@ def api_test(request, projectId, apiId):
     expect_key = ExpectKey(initial={'apiId': api_obj})
     expect_key_type = ExpectKey_Type(initial={'apiId': api_obj})
     result_len = 12
+    ScriptForm = Script()
+
     if obj_test:
         MyFormSet = formset_factory(Case, formset=ORDER_FIXED, can_order=True, can_delete=True, extra=0)
     else:
         MyFormSet = formset_factory(Case, formset=ORDER_FIXED, can_order=True, can_delete=True)
     formset = MyFormSet(initial=obj_test, form_kwargs={"initial": {'apiId': apiId, 'judge': False}})
+    script_modelformsets = modelformset_factory(ApiScript, fields=("ScriptName", "ScriptTpye", "createTime", "updateTime", "author"), extra=0, can_order=True, can_delete=True)
+    script_modelformset = script_modelformsets(queryset=ApiScript.objects.filter(apiId=apiId))
 
     if request.method == "POST":
         expectkey_POST = ExpectKey(request.POST, initial={'apiId': api_obj})
@@ -254,17 +261,40 @@ def api_test(request, projectId, apiId):
                 del temp_result_key_type['timetype']
                 case_formet_POST_JUDGE.save(datas=temp, apiId=api_obj, result_key=temp_result_key, result_key_type=temp_result_key_type)
                 request_handle.testCaseExec(apiId=apiId, project_obj=project_obj, api_obj=api_obj, env="158")
-                ctx = {'username': username,
-                       'project_obj': project_obj,
-                       'api_obj': api_obj,
-                       'api_params': api_params,
-                       'params_len': params_len,
-                       'expect_key': expect_key,
-                       'result_len': result_len,
-                       'formset': case_formet_POST_JUDGE,
-                       'expect_key_type': expect_key_type,
-                       }
-                return render(request, 'apitest.html', ctx)
+                return HttpResponseRedirect("/api/project%s/api%s/test" % (projectId, apiId))
+        elif "script" in request.POST:
+            script_POST = Script(request.POST, request.FILES)
+            if script_POST.is_valid():
+                temp = script_POST.cleaned_data
+
+
+                script_obj = ApiScript.objects.get_or_create(apiId=api_obj, ScriptTpye=temp['ScriptTpye'],
+                            ScriptName=temp['ScriptFile'])
+
+                if script_obj[1]:
+                    print("success")
+                    script_obj[0].ScriptFile = temp['ScriptFile']
+                    script_obj[0].author = username
+                    script_obj[0].save()
+                else:
+                    print("failed")
+                    script_obj[0].ScriptFile = temp['ScriptFile']
+                    script_obj[0].author = username
+                    script_obj[0].updateTime = datetime.datetime.now()
+                    script_obj[0].save()
+
+            script_handle.save_script(work_path=os.getcwd(), apiId=apiId, filename=temp['ScriptFile'])
+            return HttpResponseRedirect("/api/project%s/api%s/test" % (projectId, apiId))
+        elif "script_delete" in request.POST:
+            script_modelformset_POST = script_modelformsets(request.POST)
+            if script_modelformset_POST.is_valid():
+                exist_file_list = []
+                script_modelformset_POST.save()
+                script_query = ApiScript.objects.filter(apiId=api_obj)
+                for script in script_query:
+                    exist_file_list.append(script.ScriptName)
+                script_handle.del_script(work_path=os.getcwd(), apiId=apiId, exist_file_list=exist_file_list)
+            return HttpResponseRedirect("/api/project%s/api%s/test" % (projectId, apiId))
         else:
             return HttpResponseRedirect("/api/project%s/api%s/test" % (projectId, apiId))
 
@@ -278,5 +308,7 @@ def api_test(request, projectId, apiId):
                'result_len': result_len,
                'formset': formset,
                'expect_key_type': expect_key_type,
+               'ScriptForm': ScriptForm,
+               'script_modelformset': script_modelformset,
                }
         return render(request, 'apitest.html', ctx)

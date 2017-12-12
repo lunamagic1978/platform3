@@ -87,3 +87,13 @@ class ApiTestResultKey(models.Model):
     apiId = models.ForeignKey(apiList, on_delete=models.CASCADE)
     Result_key = models.CharField(max_length=1000, blank=True, null=True)
     Result_key_type = models.CharField(max_length=1000, blank=True, null=True)
+
+
+class ApiScript(models.Model):
+    apiId = models.ForeignKey(apiList, on_delete=models.CASCADE)
+    ScriptName = models.CharField(max_length=100, blank=True, null=True)
+    ScriptTpye = models.CharField(max_length=100, blank=True, null=True)
+    ScriptFile = models.FileField(upload_to='./api/upload')
+    createTime = models.DateTimeField("createTime", default=datetime.now)
+    updateTime = models.DateTimeField("updateTime", default=datetime.now)
+    author = models.CharField(max_length=100, blank=True, null=True)

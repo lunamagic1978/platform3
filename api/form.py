@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django import forms
 from django.forms import ModelForm, BaseFormSet
-from .models import project, apiList, ApiParams, ApiTest, ApiTestResultKey
+from .models import project, apiList, ApiParams, ApiTest, ApiTestResultKey, ApiScript
 from django.forms import  BaseInlineFormSet
 from django.forms.fields import BooleanField, IntegerField
 from .lib import testcase_handle
@@ -121,6 +121,7 @@ class ExpectKey(forms.Form):
             except Exception:
                 pass
 
+
 class ExpectKey_Type(forms.Form):
 
     codetype = forms.ChoiceField(choices=(('Str', 'Str'),))
@@ -170,8 +171,6 @@ class Case(forms.Form):
             case_num = "1"
 
         apiId = kwargs['initial']['apiId']
-
-
         params_query = ApiParams.objects.filter(apiId=apiId) #根据外键找到params的字段
 
         try:
@@ -206,6 +205,7 @@ class Case(forms.Form):
             judge_logic_content = case_data.Judge_logic
         except:
             judge_logic_content = {}
+
 
         if case_data_flag: #根据case_data_flag 判断是否有测试用例
             params_dict = eval(case_data.TestParams)
@@ -266,7 +266,7 @@ class Case(forms.Form):
         for i in range(1, 11, 1):
             expect_name = "result_expect_value" + str(i)
             response_name = "result_response_value" + str(i)
-            judge_logic = "result_judge_logic" + str(i)
+            judge_logic = "result_judge_logic_value" + str(i)
             self.fields[expect_name] = forms.CharField()
             self.fields[expect_name].widget.attrs["style"] = "width:100%;"
             self.fields[expect_name].required = False
@@ -306,17 +306,17 @@ class Case(forms.Form):
 
 
         if except_content != "{}" and response_content != "{}":
-            judge_case_handle = testcase_handle.JudgeCaseHandle(except_content=except_content, response_content=response_content)
+            judge_case_handle = testcase_handle.JudgeCaseHandle(except_content=except_content, response_content=response_content, params_dict=params_dict)
             for key in result_key_dict.keys():
                 if result_key_dict[key]:
-                    flag, resopnse_value = judge_case_handle.judge_by_key(key=result_key_dict[key], value=key, key_type=result_key_type_dict[key + 'type'])
+                    flag, resopnse_value = judge_case_handle.judge_by_key(key=result_key_dict[key], value=key, apiId=apiId,
+                                key_type=result_key_type_dict[key + 'type'], logic=judge_logic_dict['result_judge_logic_' + key])
                     if flag:
                         self.fields['result_response_' + key].widget.attrs["style"] = "width:100%;  background: aquamarine"
                         self.fields['result_response_' + key].initial = resopnse_value
                     else:
                         self.fields['result_response_' + key].widget.attrs["style"] = "width:100%;  background: #FFE4E1"
                         self.fields['result_response_' + key].initial = resopnse_value
-
 
 class ORDER_FIXED(BaseFormSet):
 
@@ -340,7 +340,7 @@ class ORDER_FIXED(BaseFormSet):
         result_key_obj.save()
 
         for data in datas:
-            print(data)
+            # print(data)
             case_num = data['ORDER']
             testcase_data = testcase_handle.TestCaseHandle(data)
             params_dict = testcase_data.params_handle()
@@ -355,3 +355,12 @@ class ORDER_FIXED(BaseFormSet):
             obj.Judge_logic = new_judge_logic
             obj.Except_content = new_except_content
             obj.save()
+
+
+class Script(ModelForm):
+    ScriptTpye = forms.ChoiceField(choices=(("normalScript", "normalScript"),
+                                            ("prepareScript", "prepareScript"),))
+    class Meta:
+        model = ApiScript
+
+        fields = ('ScriptTpye', 'ScriptFile')
