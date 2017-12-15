@@ -5,7 +5,16 @@
             $('#createApi').css({display:'flex'});
         }
 
-        $('#id_request_methond').change(function () {
+        function hiddenCreate() {
+            $('#createApi').css({display:'none'});
+        }
+
+        function editDate() {
+            $('#editbefore').hide();
+            $('#editafter').show();
+        }
+
+        $('#id_request_method').change(function () {
             var post_method = ($(this).children('option:selected').val());
             console.log(post_method);
             if (post_method=="POST"){

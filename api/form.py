@@ -325,14 +325,18 @@ class Case(forms.Form):
             judge_case_handle = testcase_handle.JudgeCaseHandle(except_content=except_content, response_content=response_content, params_dict=params_dict)
             for key in result_key_dict.keys():
                 if result_key_dict[key]:
-                    flag, resopnse_value = judge_case_handle.judge_by_key(key=result_key_dict[key], value=key, apiId=apiId,
+                    try:
+                        flag, resopnse_value = judge_case_handle.judge_by_key(key=result_key_dict[key], value=key, apiId=apiId,
                                 key_type=result_key_type_dict[key + 'type'], logic=judge_logic_dict['result_judge_logic_' + key])
-                    if flag:
-                        self.fields['result_response_' + key].widget.attrs["style"] = "width:100%;  background: aquamarine"
-                        self.fields['result_response_' + key].initial = resopnse_value
-                    else:
-                        self.fields['result_response_' + key].widget.attrs["style"] = "width:100%;  background: #FFE4E1"
-                        self.fields['result_response_' + key].initial = resopnse_value
+
+                        if flag:
+                            self.fields['result_response_' + key].widget.attrs["style"] = "width:100%;  background: aquamarine"
+                            self.fields['result_response_' + key].initial = resopnse_value
+                        else:
+                            self.fields['result_response_' + key].widget.attrs["style"] = "width:100%;  background: #FFE4E1"
+                            self.fields['result_response_' + key].initial = resopnse_value
+                    except Exception:
+                        pass
 
 class ORDER_FIXED(BaseFormSet):
 
