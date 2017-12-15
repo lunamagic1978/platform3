@@ -210,10 +210,6 @@ def api_debug(request, projectId, apiId):
         return render(request, 'apidebug.html', ctx)
 
 
-def index_json(request):
-    return render(request, 'index_json.html')
-
-
 @login_required
 def api_test(request, projectId, apiId):
     username = request.session.get('user', '')  # 根据session中的user获得登陆的用户名
@@ -226,6 +222,8 @@ def api_test(request, projectId, apiId):
     expect_key_type = ExpectKey_Type(initial={'apiId': api_obj})
     result_len = 12
     ScriptForm = Script()
+    debugEnv = DebugEnv(instance=api_obj)
+
 
     if obj_test:
         MyFormSet = formset_factory(Case, formset=ORDER_FIXED, can_order=True, can_delete=True, extra=0)
@@ -240,6 +238,7 @@ def api_test(request, projectId, apiId):
         case_formet_POST_SAVE = MyFormSet(request.POST, form_kwargs={"initial": {'apiId': apiId, 'judge': False}})
         case_formet_POST_JUDGE = MyFormSet(request.POST, form_kwargs={"initial": {'apiId': apiId, 'judge': True}})
         expectkey_type_POST = ExpectKey_Type(request.POST, initial={'apiId': api_obj})
+        debugEnv_POST = DebugEnv(request.POST)
 
         if "testcasesave" in request.POST:
             if case_formet_POST_SAVE.is_valid() and expectkey_POST.is_valid() and expectkey_type_POST.is_valid():
@@ -254,16 +253,17 @@ def api_test(request, projectId, apiId):
                 return HttpResponseRedirect("/api/project%s/api%s/test" % (projectId, apiId))
 
         elif "exec" in request.POST:
-            if case_formet_POST_JUDGE.is_valid() and expectkey_POST.is_valid() and expectkey_type_POST.is_valid():
+            if case_formet_POST_JUDGE.is_valid() and expectkey_POST.is_valid() and expectkey_type_POST.is_valid() and debugEnv_POST.is_valid():
                 temp = case_formet_POST_JUDGE.cleaned_data
                 temp_result_key = expectkey_POST.cleaned_data
                 temp_result_key_type = expectkey_type_POST.cleaned_data
+                env = debugEnv_POST.cleaned_data['env']
                 del temp_result_key['response_code']
                 del temp_result_key['response_time']
                 del temp_result_key_type['codetype']
                 del temp_result_key_type['timetype']
                 case_formet_POST_JUDGE.save(datas=temp, apiId=api_obj, result_key=temp_result_key, result_key_type=temp_result_key_type)
-                request_handle.testCaseExec(apiId=apiId, project_obj=project_obj, api_obj=api_obj, env="158")
+                request_handle.testCaseExec(apiId=apiId, project_obj=project_obj, api_obj=api_obj, env=env)
                 return HttpResponseRedirect("/api/project%s/api%s/test" % (projectId, apiId))
         elif "script" in request.POST:
             script_POST = Script(request.POST, request.FILES)
@@ -313,5 +313,6 @@ def api_test(request, projectId, apiId):
                'expect_key_type': expect_key_type,
                'ScriptForm': ScriptForm,
                'script_modelformset': script_modelformset,
+               'debugEnv': debugEnv,
                }
         return render(request, 'apitest.html', ctx)

@@ -16,6 +16,8 @@
 
 {% block api_home_content %}
 <div class="container">
+        <form method="post" action="" class="form-horizontal">
+    {% csrf_token %}
         <div class="col-sm-1 col-sm-offset-1">
             <div class="col-sm-4">{{ debugEnv.env }}</div>
         </div>
@@ -27,8 +29,7 @@
             </div>
         </div>
     <div>
-    <form method="post" action="" class="form-horizontal">
-    {% csrf_token %}
+
         <table border="1" class="table table-striped table-bordered table-hover table-condensed table-responsive" id="tableCase">
             <tr>
                 <td></td>
