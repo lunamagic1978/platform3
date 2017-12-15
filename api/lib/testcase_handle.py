@@ -71,14 +71,6 @@ class JudgeCaseHandle():
 
             response_value = self.__response_with_key(response_value_dict, key)
 
-            # if key_type == "Str":
-            #     except_value = str(except_value)
-            # elif key_type == "Int":
-            #     try:
-            #         except_value = int(except_value)
-            #     except Exception:
-            #         pass
-
             except_value = self.__charge_type(except_value, key_type)
 
             try:

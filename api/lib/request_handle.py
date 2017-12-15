@@ -2,6 +2,7 @@
 import requests
 from api.models import ApiTest
 from time import time
+import os
 
 class requestHandle():
 
@@ -41,6 +42,16 @@ def testCaseExec(apiId, project_obj, api_obj, env):
 
     testCases = ApiTest.objects.filter(apiId_id=apiId)
     for case in testCases:
+
+        base_path = os.path.join(os.getcwd(), "api/upload")
+        api_path = os.path.join(base_path, str(apiId))
+        try:
+            script_file = os.path.join(api_path, "setup.py")
+            result = os.popen("python3 %s" % script_file)
+            res = result.read()
+        except Exception:
+            print("no setup.py")
+
         params_dict = eval(case.TestParams)
         params_dict_fix = {}
         for key in params_dict.keys():
