@@ -24,6 +24,7 @@ class apiList(models.Model):
     creater = models.CharField(max_length=100)
     request_protocol = models.CharField(max_length=100, default="http")
     env = models.CharField(max_length=100, default="Online")
+    post_method = models.CharField(max_length=25, blank=True, null=True)
 
     def __str__(self):
         return self.apiName

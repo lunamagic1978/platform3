@@ -24,6 +24,12 @@ TYPE_CHOICE = (('Str', 'Str'),
                ('List', 'List'),
                ('Dict', 'Dict'),)
 
+POST_CHOICE = (('None', 'None'),
+               ('form-data', 'form-data'),
+               ('x-www-form-urlencoded', 'x-www-form-urlencoded'),
+               ('raw', 'raw'),
+               ('binary', 'binary'),)
+
 
 LOGIC_CHOICE = (('=', '='),
                 ('>', '>'),
@@ -35,28 +41,38 @@ LOGIC_CHOICE = (('=', '='),
 
 class createProject(ModelForm):
 
+    def __init__(self, *args, **kwargs):
+        super(createProject, self).__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs["style"] = "width:100%;"
+        self.fields['host'].widget.attrs["style"] = "width:100%;"
+        self.fields['port'].widget.attrs["style"] = "width:100%;"
+
     class Meta:
         model = project
-
         fields = ('name', 'host', 'port')
 
 
 class createApi(ModelForm):
-
-    request_methond = forms.ChoiceField()
+    request_method = forms.ChoiceField()
     request_protocol = forms.ChoiceField()
+    post_method = forms.ChoiceField()
 
     def __init__(self, *args, **kwargs):
         super(createApi, self).__init__(*args, **kwargs)
-        self.fields['request_methond'].choices = METHOD_CHOICE
-        self.fields['request_methond'].widget.attrs["class"] = "form-control"
-
+        self.fields['apiName'].widget.attrs["style"] = "width:100%;"
+        self.fields['url'].widget.attrs["style"] = "width:100%;"
+        self.fields['creater'].widget.attrs["style"] = "width:100%;"
+        self.fields['request_method'].choices = METHOD_CHOICE
+        self.fields['request_method'].widget.attrs["class"] = "form-control"
         self.fields['request_protocol'].choices = PROTOCOL_CHOICE
         self.fields['request_protocol'].widget.attrs["class"] = "form-control"
+        self.fields['post_method'].choices = POST_CHOICE
+        self.fields['post_method'].widget.attrs["class"] = "form-control"
+
 
     class Meta:
         model = apiList
-        fields = ('apiName', 'url')
+        fields = ('apiName', 'url', 'request_protocol', 'request_protocol', 'creater')
 
 
 class DebugApiParamsForm(ModelForm):

@@ -22,9 +22,9 @@ from .models import project, apiList, ApiDetail, ApiBody, ApiParams, ApiTest, Ap
 @login_required
 def apihome(request):
     username = request.session.get('user', '')
-
+    project_modelforsets = modelformset_factory(project, form=createProject, fields=("name", "host", "port"), extra=0, can_delete=True)
+    project_modelforset = project_modelforsets()
     if request.method == "POST":
-
         if "submit_createProject" in request.POST:
             logging.debug("创建项目的操作 保存")
             createProject_form = createProject(request.POST)
@@ -36,17 +36,17 @@ def apihome(request):
                 obj = project.objects.create(name=name, port=port, host=host)
                 obj.save()
             return HttpResponseRedirect("/api/home")
+        if "editsave" in request.POST:
+            project_modelforset_POST = project_modelforsets(request.POST)
+            if project_modelforset_POST.is_valid():
+                project_modelforset_POST.save()
 
-        if "canncl_createProject" in request.POST:
-            logging.debug("创建项目的操作 取消")
-            return HttpResponseRedirect("/api/home")
         return HttpResponseRedirect("/api/home")
     else:
-        all_list = project.objects.all()
         createProject_form = createProject()
         ctx = {'username': username,
                'createProject_form': createProject_form,
-               'displayList': all_list,}
+               'project_modelforset': project_modelforset,}
 
         return render(request, 'apihome.html', ctx)
 
@@ -55,10 +55,12 @@ def apihome(request):
 def apilist(request, projectId):
     username = request.session.get('user', '')
     project_obj = project.objects.get(id=projectId)
+    apiList_formsets = inlineformset_factory(project, apiList, form=createApi, fields=(
+    "apiName", "url", "request_method", "request_protocol", "post_method", "creater"), can_delete=True, extra=0, )
 
+    apiList_formset = apiList_formsets(instance=project_obj)
     if request.method == "POST":
         if "submit_createApi" in request.POST:
-            logging.debug("创建接口文档的操作 保存")
             createApi_form = createApi(request.POST)
             if createApi_form.is_valid():
                 temp = createApi_form.cleaned_data
@@ -66,22 +68,22 @@ def apilist(request, projectId):
                 url = temp['url']
                 request_method = temp['request_methond']
                 request_protocol = temp['request_protocol']
-                obj = apiList.objects.create(apiName=apiName, url=url, request_protocol=request_protocol, request_method=request_method, creater=username, projectName_id=projectId)
+                post_method = temp['post_methond']
+                if request_method == "POST":
+                    obj = apiList.objects.create(apiName=apiName, url=url, request_protocol=request_protocol,
+                                                 request_method=request_method, creater=username,
+                                                 projectName_id=projectId, post_method=post_method)
+                else:
+                    obj = apiList.objects.create(apiName=apiName, url=url, request_protocol=request_protocol,
+                                                 request_method=request_method, creater=username,
+                                                 projectName_id=projectId)
                 obj.save()
+                return HttpResponseRedirect("/api/project%s" % projectId)
 
-            createApi_form = createApi()
-            api_list = apiList.objects.filter(projectName_id=projectId)
-            ctx = {'username': username,
-                   'project_obj': project_obj,
-                   'createApi_form': createApi_form,
-                   'api_list': api_list,
-                   }
-            return render(request, 'apilist.html', ctx)
-
-        if "canncl_createApi" in request.POST:
-            logging.debug("创建接口文档的操作 取消")
-            return HttpResponseRedirect("/api/project%s" % projectId)
-
+        if "editsave" in request.POST:
+            apiList_formset_POST = apiList_formsets(request.POST, instance=project_obj)
+            if apiList_formset_POST.is_valid():
+                apiList_formset_POST.save()
         return HttpResponseRedirect("/api/project%s" % projectId)
     else:
         createApi_form = createApi()
@@ -91,6 +93,7 @@ def apilist(request, projectId):
                'createApi_form': createApi_form,
                'api_list': api_list,
                "projectId": projectId,
+               "apiList_formset": apiList_formset,
                 }
         return render(request, 'apilist.html', ctx)
 
