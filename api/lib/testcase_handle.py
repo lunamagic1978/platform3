@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+globals = {"false": "false"}
 
 class TestCaseHandle():
 
@@ -17,6 +18,16 @@ class TestCaseHandle():
                 if data[key]:
                     params_dict[key] = data[key]
         return params_dict
+
+    def body_handle(self):
+        body_dict = {}
+        data = self.data
+        for key in data.keys():
+            if key.startswith('body'):
+                if data[key]:
+                    body_dict[key] = data[key]
+        return body_dict
+
 
     def code_handle(self):
         _data = self.data
@@ -59,7 +70,7 @@ class JudgeCaseHandle():
             except_content_dict = {}
 
         if self.response_content:
-            response_value_dict = eval(self.response_content)
+            response_value_dict = eval(self.response_content, globals)
         else:
             response_value_dict = {}
 
@@ -72,7 +83,6 @@ class JudgeCaseHandle():
             response_value = self.__response_with_key(response_value_dict, key)
 
             except_value = self.__charge_type(except_value, key_type)
-
             try:
                 if logic == "=":
                     assert except_value == response_value

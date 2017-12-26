@@ -49,8 +49,16 @@
 <div style="padding-top: 120px"></div>
 
 {% block api_home_content %}
-{% endblock %}
 
+
+{% endblock %}
+{% if messages %}
+<script>
+    {% for msg in messages %}
+        alert('{{ msg.message }}');
+    {% endfor %}
+</script>
+{% endif %}
 
 </body>
 </html>

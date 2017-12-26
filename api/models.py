@@ -44,6 +44,7 @@ class ApiParams(models.Model):
     key_default = models.CharField(max_length=1000, null=True, blank=True)
     key_description = models.CharField(max_length=1000, null=True, blank=True)
     key_value = models.CharField(max_length=1000, null=True, blank=True)
+    key_selected = models.BooleanField(default=False)
 
     def __str__(self):
         return self.apiId
@@ -56,6 +57,8 @@ class ApiBody(models.Model):
     body_must = models.BooleanField(default=True)
     body_default = models.CharField(max_length=1000, null=True, blank=True)
     body_description = models.CharField(max_length=1000, null=True, blank=True)
+    body_value = models.CharField(max_length=1000, null=True, blank=True)
+    body_selected = models.BooleanField(default=False)
 
     def __str__(self):
         return self.apiId
@@ -76,12 +79,14 @@ class ApiTest(models.Model):
     TestBodys = models.CharField(max_length=1000, blank=True, null=True)
     Response_code = models.CharField(max_length=10, blank=True, null=True)
     Response_time = models.CharField(max_length=100, blank=True, null=True)
-    Response_content = models.CharField(max_length=15000, blank=True, null=True)
+    Response_content = models.TextField(blank=True, null=True)
     Except_code = models.CharField(max_length=10, blank=True, null=True)
     Except_time = models.CharField(max_length=100, blank=True, null=True)
     Except_content = models.CharField(max_length=1000, blank=True, null=True)
     CaseNum = models.CharField(max_length=1000, blank=True, null=True)
     Judge_logic = models.CharField(max_length=1000, blank=True, null=True)
+    Judge_type = models.CharField(max_length=1000, blank=True, null=True)
+    Judge_result = models.BooleanField(default=False)
 
 
 class ApiTestResultKey(models.Model):

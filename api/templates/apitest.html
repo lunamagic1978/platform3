@@ -33,7 +33,12 @@
         <table border="1" class="table table-striped table-bordered table-hover table-condensed table-responsive" id="tableCase">
             <tr>
                 <td></td>
+                {% if params_len %}
                 <td colspan="{{ params_len }}" style="text-align: center">params</td>
+                {% endif %}
+                {% if bodys_len %}
+                <td colspan="{{ bodys_len }}" style="text-align: center">bodys</td>
+                {% endif %}
                 <td colspan="{{ result_len }}" style="text-align: center">result</td>
                 <td>delete</td>
             </tr>
@@ -43,6 +48,10 @@
                 {% for item in api_params %}
                 <td rowspan="2" style="min-width: 30px; max-width: 60px; word-wrap: break-word">{{ item.key }}</td>
                 {% endfor %}
+                {% for item in api_bodys %}
+                <td rowspan="2" style="min-width: 30px; max-width: 60px; word-wrap: break-word">{{ item.body }}</td>
+                {% endfor %}
+
                 {% for item in expect_key %}
                     <td style="min-width: 30px; max-width: 60px; word-wrap: break-word">{{ item }}</td>
                 {% endfor %}
@@ -59,11 +68,19 @@
             {{  formset.management_form }}
             {% for form in formset %}
             <tr>
-                <td rowspan="3" style="min-width: 10px; max-width: 20px; word-wrap: break-word;">{{  form.ORDER }}</td>
+                <td rowspan="4" style="min-width: 10px; max-width: 20px; word-wrap: break-word;">{{  form.ORDER }}</td>
                 {% for item in form %}
                     {% ifequal  item.name|slice:":5" "param" %}
 
-                            <td rowspan="3" style="min-width: 20px; max-width: 65px; word-wrap: break-word">{{ item }}</td>
+                            <td rowspan="4" style="min-width: 20px; max-width: 65px; word-wrap: break-word">{{ item }}</td>
+                    {% endifequal %}
+
+                {% endfor %}
+
+                {% for item in form %}
+                    {% ifequal  item.name|slice:":5" "bodys" %}
+
+                            <td rowspan="4" style="min-width: 20px; max-width: 65px; word-wrap: break-word">{{ item }}</td>
                     {% endifequal %}
 
                 {% endfor %}
@@ -91,9 +108,20 @@
                             <td>{{ item }}</td>
                     {% endifequal %}
 
+
                 {% endfor %}
                 <td></td>
+            </tr>
+            <tr>
+                {% for item in form %}
+                    {% ifequal  item.name|slice:":17" "result_judge_type" %}
 
+                            <td>{{ item }}</td>
+                    {% endifequal %}
+
+
+                {% endfor %}
+                <td></td>
             </tr>
 
 
@@ -117,8 +145,9 @@
         <input class="btn btn-primary btn-xs" type="submit" value="save" name="testcasesave" id="testcasesave">
         <input class="btn btn-default btn-xs" type="submit" value="exec" name="exec" id="exec">
 
-    </form>
+
     </div>
+        </form>
 </div>
 
 <div class="container">
@@ -178,7 +207,9 @@
         var html_tr1 =  smaple_tr1.eq(3).clone(true);
         var html_tr2 =  smaple_tr1.eq(4).clone(true);
         var html_tr3 =  smaple_tr1.eq(5).clone(true);
-        var form_num =  smaple_tr1.length/3;
+        var html_tr4 =  smaple_tr1.eq(6).clone(true);
+        var form_num =  (smaple_tr1.length+1)/4;
+        console.log(form_num)
 
         html_tr1.find('input').each(function () {
             var name = $(this).attr('name');
@@ -211,12 +242,28 @@
         }
         );
 
-        html_tr3.find('input').each(function () {
+        html_tr3.find('select').each(function () {
             var name = $(this).attr('name');
             var new_name = name.replace(0, form_num-1);
             var id_form = $(this).attr('id');
             var new_id_form = id_form.replace(0, form_num-1);
+            console.log(name)
+            console.log(new_name)
+            console.log(id_form)
+            console.log(new_id_form)
 
+            $(this).attr('name', new_name);
+            $(this).attr('id', new_id_form);
+            $(this).attr('value', '');
+            $(this).attr('style', 'width:100%;');
+        }
+        );
+
+        html_tr4.find('input').each(function () {
+            var name = $(this).attr('name');
+            var new_name = name.replace(0, form_num-1);
+            var id_form = $(this).attr('id');
+            var new_id_form = id_form.replace(0, form_num-1);
             $(this).attr('name', new_name);
             $(this).attr('id', new_id_form);
             $(this).attr('value', '');
@@ -227,6 +274,7 @@
         $('#tableCase').append(html_tr1);
         $('#tableCase').append(html_tr2);
         $('#tableCase').append(html_tr3);
+        $('#tableCase').append(html_tr4);
 
         $('#id_form-TOTAL_FORMS').attr("value",parseInt(count)+1);
 

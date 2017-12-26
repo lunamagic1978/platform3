@@ -3,6 +3,7 @@ import requests
 from api.models import ApiTest
 from time import time
 import os
+import re
 
 class requestHandle():
 
@@ -10,9 +11,11 @@ class requestHandle():
         self.host = project_obj.host
         self.url = api_obj.url
         self.request_method = api_obj.request_method
+        self.post_method = api_obj.post_method
         self.request_protocol = api_obj.request_protocol
         self.port = project_obj.port
         self.params = {}
+        self.payload = None
         self.headers = {}
 
     def set_params(self, key, value):
@@ -22,19 +25,27 @@ class requestHandle():
     def set_case_params(self, params):
         self.params = params
 
+    def set_bodys(self, body, body_value):
+        if self.post_method == "x-www-form-urlencoded":
+            self.headers['content-type'] = "application/x-www-form-urlencoded"
+
+            if body_value:
+                if self.payload:
+                    self.payload = self.payload + "&%s=%s" % (body, body_value)
+                else:
+                    self.payload = "%s=%s" % (body, body_value)
+
     def request_send(self, env):
-        headers = {}
 
         if env == "Online":
             url = self.request_protocol + "://" + self.host + ":" + self.port + self.url
         elif env == "158":
-            headers['host'] = self.host
+            self.headers['host'] = self.host
             url = self.request_protocol + "://" + "123.59.42.158" + ":" + self.port + self.url
         elif env == '230':
-            headers['host'] = self.host
+            self.headers['host'] = self.host
             url = self.request_protocol + "://" + "180.150.179.230" + ":" + self.port + self.url
-
-        response_data = requests.request(method=self.request_method, url=url, params=self.params, headers=headers)
+        response_data = requests.request(method=self.request_method, url=url, params=self.params, headers=self.headers, data=self.payload)
         return response_data
 
 
@@ -42,7 +53,7 @@ def testCaseExec(apiId, project_obj, api_obj, env):
 
     testCases = ApiTest.objects.filter(apiId_id=apiId)
     for case in testCases:
-
+        request_Handle = requestHandle(project_obj=project_obj, api_obj=api_obj)
         base_path = os.path.join(os.getcwd(), "api/upload")
         api_path = os.path.join(base_path, str(apiId))
         try:
@@ -57,7 +68,13 @@ def testCaseExec(apiId, project_obj, api_obj, env):
         for key in params_dict.keys():
             params_dict_fix[key[7:]] = params_dict[key]
 
-        request_Handle = requestHandle(project_obj=project_obj, api_obj=api_obj)
+        if request_Handle.post_method == "x-www-form-urlencoded":
+            bodys_dict = eval(case.TestBodys)
+            for key in bodys_dict.keys():
+                request_Handle.set_bodys(key[6:], bodys_dict[key])
+
+
+
         request_Handle.set_case_params(params_dict_fix)
         start_time = time()
         response_data = request_Handle.request_send(env=env)

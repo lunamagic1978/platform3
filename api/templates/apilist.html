@@ -31,7 +31,13 @@
                 <td>{{ form.url.value }}</td>
                 <td style="min-width: 40px; text-align: center">{{ form.request_protocol.value }}</td>
                 <td style="text-align: center">{{ form.request_method.value }}</td>
-                <td style="text-align: center">{{ form.post_method.value }}</td>
+                <td style="text-align: center">
+                    {% ifequal form.post_method.value "x-www-form-urlencoded" %}
+                        x-form
+                    {% else %}
+                        {{ form.post_method.value }}
+                    {% endifequal %}
+                </td>
                 <td style="text-align: center">{{ form.creater.value }}</td>
                 <td style="text-align: center">
                     <a href="/api/project{{ project_obj.id }}/api{{  form.id.value  }}/doc">文</a>

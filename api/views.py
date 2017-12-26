@@ -9,38 +9,41 @@ from django.forms import TextInput, Select
 from django.forms import inlineformset_factory, formset_factory, modelformset_factory
 from django.http import *
 from django.shortcuts import render
+from api.lib import formsets_factory, valid_factory
 import os
 import datetime
+import pytest
 
-from .form import createProject, createApi, DebugEnv, CustomInlineFormSet, ExpectKey, Case, ORDER_FIXED, ExpectKey_Type
+from .form import createProject, createApi, DebugEnv, ExpectKey, Case, ORDER_FIXED, ExpectKey_Type
 from .form import Script
 from .models import project, apiList, ApiDetail, ApiBody, ApiParams, ApiTest, ApiScript
 
-
 # Create your views here.
+
+
+def report(request):
+    username = request.session.get('user', '')
+    return render(request, 'report.html')
+
 
 @login_required
 def apihome(request):
     username = request.session.get('user', '')
-    project_modelforsets = modelformset_factory(project, form=createProject, fields=("name", "host", "port"), extra=0, can_delete=True)
-    project_modelforset = project_modelforsets()
+    projectFormsetsFactory = formsets_factory.formsetsFactory()
+    project_modelforset = projectFormsetsFactory.project_formsets()
+
     if request.method == "POST":
         if "submit_createProject" in request.POST:
             logging.debug("创建项目的操作 保存")
             createProject_form = createProject(request.POST)
             if createProject_form.is_valid():
-                temp = createProject_form.cleaned_data
-                name = temp['name']
-                host = temp['host']
-                port = temp['port']
-                obj = project.objects.create(name=name, port=port, host=host)
-                obj.save()
-            return HttpResponseRedirect("/api/home")
+                createValidFactory = valid_factory.validFactory(temp=createProject_form.cleaned_data, request=request)
+                createValidFactory.createProjectSave()
         if "editsave" in request.POST:
-            project_modelforset_POST = project_modelforsets(request.POST)
+            project_modelforset_POST = projectFormsetsFactory.project_formsets(request.POST)
             if project_modelforset_POST.is_valid():
-                project_modelforset_POST.save()
-
+                editeProjectFactory = valid_factory.validFactory(request=request, formsets_POST=project_modelforset_POST)
+                editeProjectFactory.editProjectSave()
         return HttpResponseRedirect("/api/home")
     else:
         createProject_form = createProject()
@@ -55,43 +58,28 @@ def apihome(request):
 def apilist(request, projectId):
     username = request.session.get('user', '')
     project_obj = project.objects.get(id=projectId)
-    apiList_formsets = inlineformset_factory(project, apiList, form=createApi, fields=(
-    "apiName", "url", "request_method", "request_protocol", "post_method", "creater"), can_delete=True, extra=0, )
-
-    apiList_formset = apiList_formsets(instance=project_obj)
+    apiListFactory = formsets_factory.formsetsFactory(projectId=projectId)
+    apiList_formset = apiListFactory.apiList_formsets()
     if request.method == "POST":
         if "submit_createApi" in request.POST:
             createApi_form = createApi(request.POST)
             if createApi_form.is_valid():
-                temp = createApi_form.cleaned_data
-                apiName = temp['apiName']
-                url = temp['url']
-                request_method = temp['request_methond']
-                request_protocol = temp['request_protocol']
-                post_method = temp['post_methond']
-                if request_method == "POST":
-                    obj = apiList.objects.create(apiName=apiName, url=url, request_protocol=request_protocol,
-                                                 request_method=request_method, creater=username,
-                                                 projectName_id=projectId, post_method=post_method)
-                else:
-                    obj = apiList.objects.create(apiName=apiName, url=url, request_protocol=request_protocol,
-                                                 request_method=request_method, creater=username,
-                                                 projectName_id=projectId)
-                obj.save()
+                createValidFactory = valid_factory.validFactory(temp=createApi_form.cleaned_data, request=request)
+                createValidFactory.createApiSave(projectId=projectId, username=username)
                 return HttpResponseRedirect("/api/project%s" % projectId)
 
         if "editsave" in request.POST:
-            apiList_formset_POST = apiList_formsets(request.POST, instance=project_obj)
+            apiList_formset_POST = apiListFactory.apiList_formsets(request_POST=request.POST)
             if apiList_formset_POST.is_valid():
-                apiList_formset_POST.save()
+                editeApiFactory = valid_factory.validFactory(request=request,
+                                                                 formsets_POST=apiList_formset_POST)
+                editeApiFactory.editApiSave()
         return HttpResponseRedirect("/api/project%s" % projectId)
     else:
         createApi_form = createApi()
-        api_list = apiList.objects.filter(projectName_id=projectId)
         ctx = {'username': username,
                'project_obj': project_obj,
                'createApi_form': createApi_form,
-               'api_list': api_list,
                "projectId": projectId,
                "apiList_formset": apiList_formset,
                 }
@@ -108,49 +96,25 @@ def api_doc(request, projectId, apiId):
     except:
         api_detail = "无"
 
-    widgets = {
-                "key": TextInput(attrs={'style': "border:none; width:100%;", }),
-                "key_type": Select(attrs={'style': "border:none; width:100%;", }),
-                "key_description": TextInput(attrs={'style': "border:none; width:100%;", }),
-                "key_default": TextInput(attrs={'style': "border:none; width:100%;", }),
-               }
-
-    bodys_widgts = {
-                "body": TextInput(attrs={'style': "border:none; width:100%;", }),
-                "body_type": Select(attrs={'style': "border:none; width:100%;", }),
-                "body_default": TextInput(attrs={'style': "border:none; width:100%;", }),
-                "body_description": TextInput(attrs={'style': "border:none; width:100%;", }),
-               }
-
-    if ApiParams.objects.filter(apiId=apiId):
-        ApiParamsInlineFormSet = inlineformset_factory(apiList, ApiParams, fields=("key", "key_type", "key_must", "key_default", "key_description", "apiId"), can_delete=True, extra=0,
-                                                       widgets=widgets)  # 通过外键设置formset
-    else:
-        ApiParamsInlineFormSet = inlineformset_factory(apiList, ApiParams, fields=("key", "key_type", "key_must", "key_default", "key_description", "apiId"), can_delete=True, extra=1,
-                                                       widgets=widgets)  # 通过外键设置formset
-
-    if ApiBody.objects.filter(apiId=apiId):
-        ApiBodyInlineFormSet = inlineformset_factory(apiList, ApiBody, fields="__all__", can_delete=True, extra=0,
-                                                       widgets=bodys_widgts)  # 通过外键设置formset
-    else:
-        ApiBodyInlineFormSet = inlineformset_factory(apiList, ApiBody, fields="__all__", can_delete=True, extra=1,
-                                                       widgets=bodys_widgts)  # 通过外键设置formset
+    docFactory = formsets_factory.formsetsFactory(projectId=projectId, apiId=apiId)
 
     if request.method == "POST":
         if "saveParams" in request.POST:
-            ApiParamsModelFormSet_POST = ApiParamsInlineFormSet(request.POST, request.FILES, instance=api_obj) #request的内容通过Modelformset过滤后拿到数据
+            ApiParamsModelFormSet_POST = docFactory.docParams_formsets(request_POST=request.POST)
             if ApiParamsModelFormSet_POST.is_valid(): #判断数据是否正确
-                ApiParamsModelFormSet_POST.save() #把拿到的数据进行报错
+                saveParams = valid_factory.validFactory(request=request, formsets_POST=ApiParamsModelFormSet_POST)
+                saveParams.paramsSave()
         if "saveBodys" in request.POST:
-            ApiBodyModelFormSet_POST = ApiBodyInlineFormSet(request.POST, request.FILES, instance=api_obj) #request的内容通过Modelformset过滤后拿到数据
+            ApiBodyModelFormSet_POST = docFactory.docBodys_formsets(request_POST=request.POST)
             if ApiBodyModelFormSet_POST.is_valid(): #判断数据是否正确
-                ApiBodyModelFormSet_POST.save() #把拿到的数据进行报错
+                saveBodys = valid_factory.validFactory(request=request, formsets_POST=ApiBodyModelFormSet_POST)
+                saveBodys.bodysSave()
 
         return HttpResponseRedirect("/api/project%s/api%s/doc" % (projectId, apiId))
 
     else:
-        ApiParamsInlineForm = ApiParamsInlineFormSet(instance=api_obj) #根据外键的值初始化formset的数据
-        ApiBodyInlineForm = ApiBodyInlineFormSet(instance=api_obj)
+        ApiParamsInlineForm = docFactory.docParams_formsets()
+        ApiBodyInlineForm = docFactory.docBodys_formsets()
         ctx = {'username': username,
                'project_obj': project_obj,
                'api_obj': api_obj,
@@ -167,30 +131,37 @@ def api_debug(request, projectId, apiId):
     project_obj = project.objects.get(id=projectId) #根据projectId 查询项目数据 保存在project_obj中
     api_obj = apiList.objects.get(id=apiId) #根据apiid 查询api数据 保存在api_obj中
     requestHandle = request_handle.requestHandle(project_obj=project_obj, api_obj=api_obj)
-
-    CustomApiParamsInlineFormSet = inlineformset_factory(apiList, ApiParams, fields=("key_value", "key", ),
-                                    can_delete=False, extra=0, formset=CustomInlineFormSet)  # 通过外键设置formset
+    debugFactory = formsets_factory.formsetsFactory(projectId=projectId, apiId=apiId)
 
     debugEnv = DebugEnv(instance=api_obj)
     if request.method == "POST":
-        CustomApiParamsInlineForm = CustomApiParamsInlineFormSet(request.POST, request.FILES, instance=api_obj)
+        CustomApiParamsInlineForm = debugFactory.debugParams_formsets(request_POST=request.POST)
+        CustomApiBodyInlineForm = debugFactory.debugBodys_formsets(request_POST=request.POST)
         debugEnv_POST = DebugEnv(request.POST)
         if CustomApiParamsInlineForm.is_valid() and debugEnv_POST.is_valid():
             env = debugEnv_POST.cleaned_data['env']
             api_obj.env = env
             api_obj.save()
             CustomApiParamsInlineForm.save()
+            CustomApiBodyInlineForm.save()
             for form in CustomApiParamsInlineForm:
                 key = form.cleaned_data['key']
                 key_value = form.cleaned_data['key_value']
                 requestHandle.set_params(key=key, value=key_value)
 
+            for form in CustomApiBodyInlineForm:
+                body = form.cleaned_data['body']
+                body_value = form.cleaned_data['body_value']
+                requestHandle.set_bodys(body=body, body_value=body_value)
+
             response_data = requestHandle.request_send(env=env)
-            CustomApiParamsInlineForm = CustomApiParamsInlineFormSet(instance=api_obj)
+            CustomApiParamsInlineForm = debugFactory.debugParams_formsets()
+            CustomApiBodyInlineForm = debugFactory.debugBodys_formsets()
             ctx = {'username': username,
                    'project_obj': project_obj,
                    'api_obj': api_obj,
                    'CustomApiParamsInlineForm': CustomApiParamsInlineForm,
+                   'CustomApiBodyInlineForm': CustomApiBodyInlineForm,
                    'debugEnv': debugEnv_POST,
                    'response_data': response_data.content,
                    'response_status_code': response_data.status_code,
@@ -199,11 +170,13 @@ def api_debug(request, projectId, apiId):
 
         return HttpResponseRedirect("/api/project%s/api%s/debug" % (projectId, apiId))
     else:
-        CustomApiParamsInlineForm = CustomApiParamsInlineFormSet(instance=api_obj)
+        CustomApiParamsInlineForm = debugFactory.debugParams_formsets()
+        CustomApiBodyInlineForm = debugFactory.debugBodys_formsets()
         ctx = {'username': username,
                'project_obj': project_obj,
                'api_obj': api_obj,
                'CustomApiParamsInlineForm': CustomApiParamsInlineForm,
+               'CustomApiBodyInlineForm': CustomApiBodyInlineForm,
                'debugEnv': debugEnv,
                'response_data': "",
                }
@@ -216,8 +189,10 @@ def api_test(request, projectId, apiId):
     project_obj = project.objects.get(id=projectId) #根据projectId 查询项目数据 保存在project_obj中
     api_obj = apiList.objects.get(id=apiId) #根据apiid 查询api数据 保存在api_obj中
     api_params = ApiParams.objects.filter(apiId=apiId)
+    api_bodys = ApiBody.objects.filter(apiId=apiId)
     obj_test = ApiTest.objects.filter(apiId=apiId).values()
     params_len = len(api_params)
+    bodys_len = len(api_bodys)
     expect_key = ExpectKey(initial={'apiId': api_obj})
     expect_key_type = ExpectKey_Type(initial={'apiId': api_obj})
     result_len = 12
@@ -253,6 +228,7 @@ def api_test(request, projectId, apiId):
                 return HttpResponseRedirect("/api/project%s/api%s/test" % (projectId, apiId))
 
         elif "exec" in request.POST:
+            pytest.main(['-q', '/Users/smzdm/luna/platform3/api/testcase/9/case1_test.py'])
             if case_formet_POST_JUDGE.is_valid() and expectkey_POST.is_valid() and expectkey_type_POST.is_valid() and debugEnv_POST.is_valid():
                 temp = case_formet_POST_JUDGE.cleaned_data
                 temp_result_key = expectkey_POST.cleaned_data
@@ -269,8 +245,6 @@ def api_test(request, projectId, apiId):
             script_POST = Script(request.POST, request.FILES)
             if script_POST.is_valid():
                 temp = script_POST.cleaned_data
-
-
                 script_obj = ApiScript.objects.get_or_create(apiId=api_obj, ScriptTpye=temp['ScriptTpye'],
                             ScriptName=temp['ScriptFile'])
 
@@ -289,6 +263,7 @@ def api_test(request, projectId, apiId):
             script_handle.save_script(work_path=os.getcwd(), apiId=apiId, filename=temp['ScriptFile'])
             return HttpResponseRedirect("/api/project%s/api%s/test" % (projectId, apiId))
         elif "script_delete" in request.POST:
+
             script_modelformset_POST = script_modelformsets(request.POST)
             if script_modelformset_POST.is_valid():
                 exist_file_list = []
@@ -307,6 +282,8 @@ def api_test(request, projectId, apiId):
                'api_obj': api_obj,
                'api_params': api_params,
                'params_len': params_len,
+               'api_bodys': api_bodys,
+               'bodys_len': bodys_len,
                'expect_key': expect_key,
                'result_len': result_len,
                'formset': formset,

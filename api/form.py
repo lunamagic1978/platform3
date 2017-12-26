@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from django import forms
 from django.forms import ModelForm, BaseFormSet
-from .models import project, apiList, ApiParams, ApiTest, ApiTestResultKey, ApiScript
-from django.forms import  BaseInlineFormSet
+from .models import project, apiList, ApiParams, ApiTest, ApiTestResultKey, ApiScript,ApiBody
+from django.forms import BaseInlineFormSet
 from django.forms.fields import BooleanField, IntegerField
 from .lib import testcase_handle
 
@@ -61,7 +61,6 @@ class createApi(ModelForm):
         super(createApi, self).__init__(*args, **kwargs)
         self.fields['apiName'].widget.attrs["style"] = "width:100%;"
         self.fields['url'].widget.attrs["style"] = "width:100%;"
-        self.fields['creater'].widget.attrs["style"] = "width:100%;"
         self.fields['request_method'].choices = METHOD_CHOICE
         self.fields['request_method'].widget.attrs["class"] = "form-control"
         self.fields['request_protocol'].choices = PROTOCOL_CHOICE
@@ -72,7 +71,7 @@ class createApi(ModelForm):
 
     class Meta:
         model = apiList
-        fields = ('apiName', 'url', 'request_protocol', 'request_protocol', 'creater')
+        fields = ('apiName', 'url', 'request_protocol', 'request_protocol')
 
 
 class DebugApiParamsForm(ModelForm):
@@ -85,14 +84,23 @@ class DebugApiParamsForm(ModelForm):
         fields = ('key_value', 'key')
 
 
-class CustomInlineFormSet(BaseInlineFormSet):
+class debugParamsFormSet(BaseInlineFormSet):
 
     def __init__(self, *args, **kwargs):
-        super(CustomInlineFormSet, self).__init__(*args, **kwargs)
+        super(debugParamsFormSet, self).__init__(*args, **kwargs)
         for form in self.forms:
             form.fields['key_value'].label = form.instance.key
             form.fields['key'].widget.attrs["style"] = "width:100%;"
             form.fields['key_value'].widget.attrs["style"] = "width:100%;"
+
+class debugBodysFormset(BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        super(debugBodysFormset, self).__init__(*args, **kwargs)
+        for form in self.forms:
+            form.fields['body_value'].label = form.instance.body
+            form.fields['body'].widget.attrs["style"] = "width:100%;"
+            form.fields['body_value'].widget.attrs["style"] = "width:100%;"
+
 
 
 class DebugEnv(ModelForm):
@@ -170,6 +178,8 @@ class Case(forms.Form):
     result_response_time = forms.CharField()
     result_judge_logic_code = forms.ChoiceField(choices=LOGIC_CHOICE)
     result_judge_logic_time = forms.ChoiceField(choices=LOGIC_CHOICE)
+    result_judge_type_code = forms.ChoiceField(choices=TYPE_CHOICE)
+    result_judge_type_time = forms.ChoiceField(choices=TYPE_CHOICE)
 
     def __init__(self, *args, **kwargs):
         super(Case, self).__init__(*args, **kwargs)
@@ -188,6 +198,7 @@ class Case(forms.Form):
 
         apiId = kwargs['initial']['apiId']
         params_query = ApiParams.objects.filter(apiId=apiId) #根据外键找到params的字段
+        bodys_query = ApiBody.objects.filter(apiId=apiId)
 
         try:
             result_key_dict = eval(ApiTestResultKey.objects.get(apiId=apiId).Result_key)
@@ -222,16 +233,30 @@ class Case(forms.Form):
         except:
             judge_logic_content = {}
 
+        try:
+            judge_tpye_content = case_data.Judge_type
+        except:
+            judge_tpye_content = {}
+
 
         if case_data_flag: #根据case_data_flag 判断是否有测试用例
-            params_dict = eval(case_data.TestParams)
+            try:
+                params_dict = eval(case_data.TestParams)
+            except:
+                params_dict = {}
+            try:
+                bodys_dict = eval(case_data.TestBodys)
+            except:
+                bodys_dict = {}
             casenum = case_data.CaseNum
         else:
             params_dict = {}
+            bodys_dict = {}
             casenum = False
 
         if casenum:
             self.fields['case_num'].initial = case_data.CaseNum
+
         for item in params_query:
             fields_name = 'params_' + item.key
             self.fields[fields_name] = forms.CharField()
@@ -239,6 +264,14 @@ class Case(forms.Form):
             self.fields[fields_name].required = False
             if fields_name in params_dict.keys():
                 self.fields[fields_name].initial = params_dict[fields_name]
+
+        for item in bodys_query:
+            fields_name = 'bodys_' + item.body
+            self.fields[fields_name] = forms.CharField()
+            self.fields[fields_name].widget.attrs["style"] = "width:100%;"
+            self.fields[fields_name].required = False
+            if fields_name in bodys_dict.keys():
+                self.fields[fields_name].initial = bodys_dict[fields_name]
 
 
 
@@ -250,7 +283,9 @@ class Case(forms.Form):
         self.fields['result_response_time'].widget.attrs["style"] = "width:100%;"
         self.fields['result_judge_logic_code'].widget.attrs["style"] = "width:100%;"
         self.fields['result_judge_logic_time'].widget.attrs["style"] = "width:100%;"
-        self.fields['result_expect_time'].initial = "1"
+        self.fields['result_expect_time'].initial = "1000"
+        self.fields['result_judge_type_code'].widget.attrs["style"] = "width:100%;"
+        self.fields['result_judge_type_time'].widget.attrs["style"] = "width:100%;"
 
         try:
             new_code = case_data.Except_code
@@ -283,6 +318,7 @@ class Case(forms.Form):
             expect_name = "result_expect_value" + str(i)
             response_name = "result_response_value" + str(i)
             judge_logic = "result_judge_logic_value" + str(i)
+            judge_type = "result_judge_type" + str(i)
             self.fields[expect_name] = forms.CharField()
             self.fields[expect_name].widget.attrs["style"] = "width:100%;"
             self.fields[expect_name].required = False
@@ -291,6 +327,8 @@ class Case(forms.Form):
             self.fields[response_name].required = False
             self.fields[judge_logic] = forms.ChoiceField(choices=LOGIC_CHOICE)
             self.fields[judge_logic].widget.attrs["style"] = "width:100%;"
+            self.fields[judge_type] = forms.ChoiceField(choices=TYPE_CHOICE)
+            self.fields[judge_type].widget.attrs["style"] = "width:100%;"
 
         if except_content != "{}":
             try:
@@ -364,12 +402,14 @@ class ORDER_FIXED(BaseFormSet):
             case_num = data['ORDER']
             testcase_data = testcase_handle.TestCaseHandle(data)
             params_dict = testcase_data.params_handle()
+            bodys_dict =testcase_data.body_handle()
             new_code = testcase_data.code_handle()
             new_time = testcase_data.time_handle()
             new_except_content = testcase_data.except_content_hanele(result_key_dict=result_key)
             new_judge_logic = testcase_data.judge_logic_handle()
             obj = ApiTest.objects.get_or_create(apiId=apiId, CaseNum=case_num)[0]
             obj.TestParams = params_dict
+            obj.TestBodys = bodys_dict
             obj.Except_code = new_code
             obj.Except_time = new_time
             obj.Judge_logic = new_judge_logic
