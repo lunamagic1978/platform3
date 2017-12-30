@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from api.models import project, apiList
+from api.models import project, apiList, env
 from . import messages
 
 class validFactory():
@@ -15,8 +15,11 @@ class validFactory():
         host = self.temp['host']
         port = self.temp['port']
         obj = project.objects.create(name=name, port=port, host=host)
+
+        env_obj = env.objects.create(envName="默认环境", envHost=host, envPort=port, projectId_id=obj.pk)
         try:
             obj.save()
+            env_obj.save()
             messages.flash(self.request, 'info', '项目保存成功')
         except Exception as e:
             print(e)

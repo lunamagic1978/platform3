@@ -16,18 +16,21 @@
 {% endblock %}
 
 {% block api_home_content %}
+
+
 <div class="container">
 <form method="post" action="" class="form-horizontal">
     {% csrf_token %}
 
     <div class="form-group">
-        <div class="col-sm-1 col-sm-offset-1">
-            <div class="col-sm-4">{{ debugEnv.env }}</div>
-        </div>
+
+
+        <div class="col-sm-1 col-sm-offset-1">{{ debugEnv.env }}</div>
 
 
 
-        <div class="col-sm-7 ">
+
+        <div class="col-sm-7">
             <div class="input-group">
             <span class="input-group-addon" id="basic-addon1">{{ api_obj.request_method }}</span>
             <input type="text" class="form-control col-sm-4 " aria-activedescendant="basic-addon1" value="{{ api_obj.request_protocol }}://{{ project_obj.host }}:{{ project_obj.port }}{{ api_obj.url }}" readonly="readonly" style="background-color: white">

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django import forms
 from django.forms import ModelForm, BaseFormSet
-from .models import project, apiList, ApiParams, ApiTest, ApiTestResultKey, ApiScript,ApiBody
+from .models import project, apiList, ApiParams, ApiTest, ApiTestResultKey, ApiScript, ApiBody, env
 from django.forms import BaseInlineFormSet
 from django.forms.fields import BooleanField, IntegerField
 from .lib import testcase_handle
@@ -102,15 +102,32 @@ class debugBodysFormset(BaseInlineFormSet):
             form.fields['body_value'].widget.attrs["style"] = "width:100%;"
 
 
+class config_env_form(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(config_env_form, self).__init__(*args, **kwargs)
+        self.fields['envName'].widget.attrs["style"] = "width:100%;"
+        self.fields['envHost'].widget.attrs["style"] = "width:100%;"
+        self.fields['envPort'].widget.attrs["style"] = "width:100%;"
+        self.fields['envHeaders'].widget.attrs["style"] = "width:100%;"
+
+    class Meta:
+        model = env
+        fields = ("envName", "envHost", "envPort", "envHeaders", "projectId")
+
 
 class DebugEnv(ModelForm):
     env = forms.ChoiceField(widget=forms.Select)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self,*args, **kwargs):
         super(DebugEnv, self).__init__(*args, **kwargs)
         if 'instance' in kwargs:
             self.fields['env'].initial = kwargs['instance'].env
-        self.fields['env'].choices = ENV_CHOICE
+            obj = env.objects.filter(projectId=kwargs['instance'].projectName_id)
+            self.fields['env'].choices = ((x.envName, x.envName) for x in obj)
+        # self.fields['env'].choices = ENV_CHOICE
+        self.fields['env'].widget.attrs["class"] = "form-control"
+        self.fields['env'].widget.attrs["style"] = "width:100%;"
 
     class Meta:
         model = apiList
@@ -346,6 +363,14 @@ class Case(forms.Form):
             for key in judge_logic_dict.keys():
                 self.fields[key].initial = judge_logic_dict[key]
 
+        if judge_tpye_content != "{}":
+            try:
+                judge_type_dict = eval(judge_tpye_content)
+            except:
+                judge_type_dict = {}
+            for key in judge_type_dict.keys():
+                self.fields[key].initial = judge_type_dict[key]
+
         if new_code and response_code:
             if new_code == response_code:
                 self.fields['result_response_code'].widget.attrs["style"] = "width:100%; background: aquamarine"
@@ -359,22 +384,22 @@ class Case(forms.Form):
                 self.fields['result_response_time'].widget.attrs["style"] = "width:100%; background: red"
 
 
-        if except_content != "{}" and response_content != "{}":
-            judge_case_handle = testcase_handle.JudgeCaseHandle(except_content=except_content, response_content=response_content, params_dict=params_dict)
-            for key in result_key_dict.keys():
-                if result_key_dict[key]:
-                    try:
-                        flag, resopnse_value = judge_case_handle.judge_by_key(key=result_key_dict[key], value=key, apiId=apiId,
-                                key_type=result_key_type_dict[key + 'type'], logic=judge_logic_dict['result_judge_logic_' + key])
-
-                        if flag:
-                            self.fields['result_response_' + key].widget.attrs["style"] = "width:100%;  background: aquamarine"
-                            self.fields['result_response_' + key].initial = resopnse_value
-                        else:
-                            self.fields['result_response_' + key].widget.attrs["style"] = "width:100%;  background: #FFE4E1"
-                            self.fields['result_response_' + key].initial = resopnse_value
-                    except Exception:
-                        pass
+        # if except_content != "{}" and response_content != "{}":
+        #     judge_case_handle = testcase_handle.JudgeCaseHandle(except_content=except_content, response_content=response_content, params_dict=params_dict)
+        #     for key in result_key_dict.keys():
+        #         if result_key_dict[key]:
+        #             try:
+        #                 flag, resopnse_value = judge_case_handle.judge_by_key(key=result_key_dict[key], value=key, apiId=apiId,
+        #                         key_type=result_key_type_dict[key + 'type'], logic=judge_logic_dict['result_judge_logic_' + key])
+        #
+        #                 if flag:
+        #                     self.fields['result_response_' + key].widget.attrs["style"] = "width:100%;  background: aquamarine"
+        #                     self.fields['result_response_' + key].initial = resopnse_value
+        #                 else:
+        #                     self.fields['result_response_' + key].widget.attrs["style"] = "width:100%;  background: #FFE4E1"
+        #                     self.fields['result_response_' + key].initial = resopnse_value
+        #             except Exception:
+        #                 pass
 
 class ORDER_FIXED(BaseFormSet):
 
@@ -407,20 +432,38 @@ class ORDER_FIXED(BaseFormSet):
             new_time = testcase_data.time_handle()
             new_except_content = testcase_data.except_content_hanele(result_key_dict=result_key)
             new_judge_logic = testcase_data.judge_logic_handle()
+            new_judge_type = testcase_data.judge_logic_type_handle()
             obj = ApiTest.objects.get_or_create(apiId=apiId, CaseNum=case_num)[0]
             obj.TestParams = params_dict
             obj.TestBodys = bodys_dict
             obj.Except_code = new_code
             obj.Except_time = new_time
             obj.Judge_logic = new_judge_logic
+            obj.Judge_type = new_judge_type
             obj.Except_content = new_except_content
             obj.save()
 
 
 class Script(ModelForm):
     ScriptTpye = forms.ChoiceField(choices=(("normalScript", "normalScript"),
-                                            ("prepareScript", "prepareScript"),))
+                                            ("setupScript", "setupScript"),))
     class Meta:
         model = ApiScript
 
         fields = ('ScriptTpye', 'ScriptFile')
+
+class Base_script(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(Base_script, self).__init__(*args, **kwargs)
+        self.fields["ScriptName"].widget.attrs["readonly"] = True
+        self.fields["ScriptTpye"].widget.attrs["readonly"] = True
+        self.fields["createTime"].widget.attrs["readonly"] = True
+        self.fields["updateTime"].widget.attrs["readonly"] = True
+        self.fields["author"].widget.attrs["readonly"] = True
+
+
+    class Meta:
+        model = ApiScript
+
+        fields = ("ScriptName", "ScriptTpye", "createTime", "updateTime", "author")

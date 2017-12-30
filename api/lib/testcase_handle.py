@@ -56,6 +56,14 @@ class TestCaseHandle():
             _re_dict[key_name] = _data[key_name]
         return _re_dict
 
+    def judge_logic_type_handle(self):
+        _data = self.data
+        _re_dict = {}
+        for i in range (1, 11, 1):
+            key_name = "result_judge_type" + str(i)
+            _re_dict[key_name] = _data[key_name]
+        return _re_dict
+
 class JudgeCaseHandle():
 
     def __init__(self, except_content, response_content, params_dict):

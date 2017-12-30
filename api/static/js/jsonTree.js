@@ -660,11 +660,11 @@ var jsonTree = (function() {
      * {...
      * [+] "label": array,
      * ...}
-     * array = [1,2,3]
+     * array = [1,api2,3]
      *
      * @constructor
      * @param label {string} - key name
-     * @param val {Array} - value of array type, [1,2,3]
+     * @param val {Array} - value of array type, [1,api2,3]
      * @param isLast {boolean} - true if node is last in list of siblings
      */
     function NodeArray(label, val, isLast) {
@@ -767,7 +767,7 @@ var jsonTree = (function() {
          * Returns the source json-string (pretty-printed)
          * 
          * @param {boolean} isPrettyPrinted - 'true' for pretty-printed string
-         * @returns {string} - for exemple, '{"a":2,"b":3}'
+         * @returns {string} - for exemple, '{"a":api2,"b":3}'
          */
         toSourceJSON : function(isPrettyPrinted) {
             if (!isPrettyPrinted) {

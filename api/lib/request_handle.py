@@ -1,22 +1,27 @@
 # -*- coding: utf-8 -*-
 import requests
-from api.models import ApiTest
+from api.models import ApiTest, env
 from time import time
 import os
 import re
 
 class requestHandle():
 
-    def __init__(self, project_obj, api_obj):
-        self.host = project_obj.host
+    def __init__(self, project_obj, api_obj, project_env):
+        try:
+            obj = env.objects.get(projectId=project_obj.pk, envName=project_env)
+        except:
+            print("环境配置不存在")
+
+        self.host = obj.envHost
         self.url = api_obj.url
         self.request_method = api_obj.request_method
         self.post_method = api_obj.post_method
         self.request_protocol = api_obj.request_protocol
-        self.port = project_obj.port
+        self.port = obj.envPort
         self.params = {}
         self.payload = None
-        self.headers = {}
+        self.headers = eval(obj.envHeaders)
 
     def set_params(self, key, value):
         if value:
@@ -25,26 +30,22 @@ class requestHandle():
     def set_case_params(self, params):
         self.params = params
 
+    def set_case_bodys(self, payload):
+        if self.post_method == "x-www-form-urlencoded":
+            self.headers['content-type'] = "application/x-www-form-urlencoded"
+        self.payload = payload
+
     def set_bodys(self, body, body_value):
         if self.post_method == "x-www-form-urlencoded":
             self.headers['content-type'] = "application/x-www-form-urlencoded"
-
             if body_value:
                 if self.payload:
                     self.payload = self.payload + "&%s=%s" % (body, body_value)
                 else:
                     self.payload = "%s=%s" % (body, body_value)
 
-    def request_send(self, env):
-
-        if env == "Online":
-            url = self.request_protocol + "://" + self.host + ":" + self.port + self.url
-        elif env == "158":
-            self.headers['host'] = self.host
-            url = self.request_protocol + "://" + "123.59.42.158" + ":" + self.port + self.url
-        elif env == '230':
-            self.headers['host'] = self.host
-            url = self.request_protocol + "://" + "180.150.179.230" + ":" + self.port + self.url
+    def request_send(self):
+        url = "%s://%s:%s%s" % (self.request_protocol, self.host, self.port, self.url)
         response_data = requests.request(method=self.request_method, url=url, params=self.params, headers=self.headers, data=self.payload)
         return response_data
 

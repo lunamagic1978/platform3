@@ -14,11 +14,13 @@
         <tr>
             <td>项目名</td>
             <td>url</td>
+            <td></td>
         </tr>
         {% for form in project_modelforset %}
             <tr>
                 <td><a href="/api/project{{  form.id.value  }}">{{ form.name.value}}</a></td>
                 <td>{{ form.host.value}}:{{ form.port.value}}</td>
+                <td><a href="/api/project{{  form.id.value  }}/config">项目配置</a> </td>
             </tr>
         {% endfor %}
     </table>

@@ -18,9 +18,7 @@
 <div class="container">
         <form method="post" action="" class="form-horizontal">
     {% csrf_token %}
-        <div class="col-sm-1 col-sm-offset-1">
-            <div class="col-sm-4">{{ debugEnv.env }}</div>
-        </div>
+        <div class="col-sm-1 col-sm-offset-1">{{ debugEnv.env }}</div>
 
         <div class="col-sm-7 ">
             <div class="input-group">

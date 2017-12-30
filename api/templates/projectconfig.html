@@ -1,0 +1,87 @@
+{% extends 'apibase.html' %}
+
+{% block breadcrumb_button %}
+    <li><a href="{% url 'api_home' %}">接口平台</a></li>
+    <li ><a href="/api/project{{ project_obj.id }}">{{ project_obj.name }}</a></li>
+    <li class="active">配置页面</li>
+{% endblock %}
+
+{% block api_home_content %}
+
+    <div class="container" style="padding-left: 100px">
+        <h5>环境配置：</h5>
+        <form action="" method="post">
+        {{ env_modelformset.management_form }}
+        <table border="1" class="table table-striped table-bordered table-hover table-condensed table-responsive" id="env">
+            <tr>
+                <td style="display: none">projectId</td>
+                <td style="text-align: center; width: 15%">环境名</td>
+                <td style="text-align: center; width: 30%">host</td>
+                <td style="text-align: center; width: 10%">port</td>
+                <td style="text-align: center; width: 45%">headers</td>
+                <td style="text-align: center">删除</td>
+            </tr>
+
+
+            {% for item in env_modelformset %}
+                <div style="display: none"> {{ item.id }}</div>
+                <tr>
+                    <td style="display: none">{{ item.projectId }}</td>
+                    <td style="text-align: center; max-width: 100px; min-width: 40px">{{ item.envName }}</td>
+                    <td style="text-align: center; max-width: 100px; min-width: 40px">{{ item.envHost }}</td>
+                    <td style="text-align: center; max-width: 100px; min-width: 40px">{{ item.envPort }}</td>
+                    <td style="text-align: center; max-width: 100px; min-width: 40px">{{ item.envHeaders }}</td>
+                    <td>{{ item.DELETE }}</td>
+                </tr>
+
+            {% endfor %}
+
+
+        </table>
+        <input class="btn btn-danger btn-xs" type="button" value="添加" onclick="addenv()">
+        <input class="btn btn-primary btn-xs" type="submit" value="保存" name="saveenv">
+        {% csrf_token %}
+        </form>
+    </div>
+
+<script>
+    function addenv(){
+        var count = $('#id_form-TOTAL_FORMS').attr("value");
+        var smaple_tr1 = $('#env').find('tr');
+        var html_tr1 =  smaple_tr1.eq(1).clone(true);
+        var form_num =  parseInt(count)+1;
+
+
+        html_tr1.find('input').each(function () {
+            var name = $(this).attr('name');
+            var new_name = name.replace(0, form_num-1);
+            var id_form = $(this).attr('id');
+            var new_id_form = id_form.replace(0, form_num-1);
+
+            $(this).attr('name', new_name);
+            $(this).attr('id', new_id_form);
+            $(this).attr('value', '');
+
+        }
+        );
+
+        html_tr1.find('select').each(function () {
+            var name = $(this).attr('name');
+            var new_name = name.replace(0, form_num-1);
+            var id_form = $(this).attr('id');
+            var new_id_form = id_form.replace(0, form_num-1);
+
+            $(this).attr('name', new_name);
+            $(this).attr('id', new_id_form);
+            $(this).attr('value', '');
+
+        }
+        );
+
+        $('#env').append(html_tr1);
+
+        $('#id_form-TOTAL_FORMS').attr("value",parseInt(count)+1);
+    }
+</script>
+
+{% endblock %}

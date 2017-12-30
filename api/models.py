@@ -16,6 +16,14 @@ class project(models.Model):
     port = models.CharField(max_length=10)
 
 
+class env(models.Model):
+    projectId = models.ForeignKey(project, on_delete=models.CASCADE)
+    envName = models.CharField(max_length=100)
+    envHost = models.CharField(max_length=100)
+    envPort = models.CharField(max_length=100, default='80')
+    envHeaders = models.CharField(max_length=1000, default='{}')
+
+
 class apiList(models.Model):
     projectName = models.ForeignKey(project, on_delete=models.CASCADE)
     apiName = models.CharField(max_length=100)
@@ -86,7 +94,7 @@ class ApiTest(models.Model):
     CaseNum = models.CharField(max_length=1000, blank=True, null=True)
     Judge_logic = models.CharField(max_length=1000, blank=True, null=True)
     Judge_type = models.CharField(max_length=1000, blank=True, null=True)
-    Judge_result = models.BooleanField(default=False)
+    Judge_result = models.CharField(max_length=1000, default='{}')
 
 
 class ApiTestResultKey(models.Model):
