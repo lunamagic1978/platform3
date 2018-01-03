@@ -105,7 +105,8 @@ class TestApi(unittest.TestCase):
         allure.attach("response_content", str(response.text))
 
         try:
-            self.response_content = json.loads(response.content)
+            print(type(response.content))
+            self.response_content = json.loads(response.content.decode('utf-8'))
         except:
             print("response_content can not json loads")
 
