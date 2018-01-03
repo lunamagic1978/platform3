@@ -25,5 +25,6 @@ def del_script(work_path, apiId, exist_file_list):
         if not file in exist_file_list:
             filename = os.path.join(api_path, file)
             init_file = os.path.join(api_path, "__init__.py")
-            if filename != init_file:
+            pycache_file = os.path.join(api_path, "__pycache__")
+            if filename != init_file and filename != pycache_file:
                 os.remove(filename)
