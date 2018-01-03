@@ -259,6 +259,15 @@ def api_test(request, projectId, apiId, envId):
                                             project_name=project_obj.name, api_name=api_obj.apiName, env_id=envId)
                 except:
                     messages.flash(request, "报错", "保存测试用例出错", level="error")
+                # pytest.main(['/Users/smzdm/luna/platform3/api/testcase/%s/%s/%s' % (project_obj.pk, api_obj.pk, envId)])
+                # 'python3 -m unittest discover -s /Users/smzdm/luna/platform3/api/testcase/1/1/5/ -p "case*_test.py"'
+                # path = "'/Users/smzdm/luna/platform3/api/testcase/%s/%s/%s'" % (project_obj.pk, api_obj.pk, envId)
+                # file_list = os.listdir(path)
+                # TestSuit = unittest.TestSuite
+                # discover = unittest.defaultTestLoader.discover("/Users/smzdm/luna/platform3/api/testcase/1/1/5/",
+                #                                                pattern="case*_test.py")
+                # runner = unittest.TextTestRunner()
+                # runner.run(discover)
                 # os.system("pytest /Users/smzdm/luna/platform3/api/testcase/%s/%s/%s" % (project_obj.pk, api_obj.pk, envId))
                 public_handle.os_run(projectId=project_obj.pk, apiId=api_obj.pk, envId=envId)
 

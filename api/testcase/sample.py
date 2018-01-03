@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
 import django
+import sys
+sys.path.append(os.getcwd())
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "platform3.settings")
 django.setup()
 import allure
