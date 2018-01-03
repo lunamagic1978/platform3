@@ -10,7 +10,7 @@
     <li><a href="{% url 'api_home' %}">接口平台</a></li>
     <li ><a href="/api/project{{ project_obj.id }}">{{ project_obj.name }}</a></li>
     <li class="active">{{ api_obj.apiName }}</li>
-    <a href="/api/project{{ project_obj.id }}/api{{ api_obj.id }}/test" class="btn btn-default btn-xs " role="button" style="float: right; margin-right: 150px">测试</a>
+    <a href="/api/project{{ project_obj.id }}/api{{ api_obj.id }}/test/{{ env_default }}" class="btn btn-default btn-xs " role="button" style="float: right; margin-right: 150px">测试</a>
     <a href="/api/project{{ project_obj.id }}/api{{ api_obj.id }}/debug" class="btn btn-primary btn-xs " role="button" style="float: right; margin-right: 10px">调试</a>
     <a href="/api/project{{ project_obj.id }}/api{{ api_obj.id }}/doc" class="btn btn-default btn-xs " role="button" style="float: right; margin-right: 10px">文档</a>
 {% endblock %}

@@ -22,6 +22,7 @@ class env(models.Model):
     envHost = models.CharField(max_length=100)
     envPort = models.CharField(max_length=100, default='80')
     envHeaders = models.CharField(max_length=1000, default='{}')
+    default = models.BooleanField(default=False)
 
 
 class apiList(models.Model):
@@ -82,6 +83,7 @@ class ApiDebug(models.Model):
 
 class ApiTest(models.Model):
     apiId = models.ForeignKey(apiList, on_delete=models.CASCADE)
+    env = models.ForeignKey(env, on_delete=models.CASCADE)
     TestHead = models.CharField(max_length=1000, blank=True, null=True)
     TestParams = models.CharField(max_length=1000, blank=True, null=True)
     TestBodys = models.CharField(max_length=1000, blank=True, null=True)

@@ -174,3 +174,36 @@ class JudgeCaseHandle():
 
 
 
+def response_with_key(json_data, json_key):
+    key_list = []
+    re_list = __key_list(json_key, key_list)
+    data = json_data
+    for char in re_list:
+        char = __islist_index(char)
+        try:
+            data = data[char]
+            if data or data == 0:
+                pass
+            else:
+                data = "null"
+        except Exception:
+            data = "no node: %s" % json_key
+    return data
+
+def __key_list(key, para_list):
+    if key.find(".") != -1:
+        count = key.find(".")
+        para_list.append(key[:count])
+        __key_list(key[count+1:], para_list)
+    else:
+        para_list.append(key)
+    return para_list
+
+def __islist_index(char):
+    re_char = char
+    if char[:1] == "[" and char[-1:] == "]":
+        re_char = int(char[1:-1])
+    return re_char
+
+
+

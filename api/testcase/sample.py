@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-import os, sys
+import os
 import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "platform3.settings")
 django.setup()
-import pytest
 import allure
 import unittest
-from api.models import ApiTest, ApiTestResultKey, apiList, project, ApiScript
+from api.models import ApiTest, ApiTestResultKey, apiList, project, ApiScript, env
 from api.lib import request_handle
 from time import time
 import json
@@ -18,10 +17,12 @@ class TestApi(unittest.TestCase):
 
     def setUp(self):
 
-        self.project_id, self.apiId, self.caseId = self.get_project_api_case_num()
+        self.project_id, self.apiId, self.env, self.caseId = self.get_project_api_case_num()
         apiId = self.apiId
         caseId = self.caseId
-        env = "Online"
+        envId = self.env
+        print("env %s" %envId)
+        print(type(envId))
         base_path = os.path.join(os.getcwd(), "api/upload")
         script_path = os.path.join(base_path, str(apiId))
         try:
@@ -40,9 +41,10 @@ class TestApi(unittest.TestCase):
 
 
         try:
-            self.test_obj = ApiTest.objects.get(apiId=apiId, CaseNum=caseId)
+            self.test_obj = ApiTest.objects.get(apiId=apiId, CaseNum=caseId, env_id=self.env)
         except:
             print("no find case")
+            print("apiId: %s , casenum: %s", (apiId, caseId))
 
         try:
             self.result_obj = ApiTestResultKey.objects.get(apiId=apiId)
@@ -59,7 +61,12 @@ class TestApi(unittest.TestCase):
         except:
             print("no project")
 
-        case_request = request_handle.requestHandle(project_obj=self.project_obj, api_obj=self.api_obj)
+        try:
+            self.env_obj = env.objects.get(pk=int(envId))
+        except:
+            print("no env")
+
+        case_request = request_handle.requestHandle(project_obj=self.project_obj, api_obj=self.api_obj, project_env=self.env_obj.envName)
         params = self.params_fix(self.test_obj.TestParams)
         case_request.set_case_params(params=params)
         bodys = self.bodys_fix(self.test_obj.TestBodys)
@@ -67,7 +74,7 @@ class TestApi(unittest.TestCase):
         print("request_params: %s" % params)
         print("request_bodys: %s" % bodys)
         start_time = time()
-        response = case_request.request_send(env=env)
+        response = case_request.request_send()
         end_time = time()
         print("request_content: %s" % response.content)
 
@@ -107,18 +114,14 @@ class TestApi(unittest.TestCase):
             if self.result_key[key]:
                 i = key[5:]
                 judge_key = self.result_key[key]
-                print(judge_key)
                 try:
                     expect_value = self.except_content["result_expect_value" + str(i)]
-                    print(expect_value)
                 except:
                     print("apiId:%s caseId:%s no have expect_value" % (self.apiId, self.caseId))
                 judge_logic = self.judge_logic["result_judge_logic_value" + str(i)]
-                print(judge_logic)
                 judge_type = self.judge_type["result_judge_type" + str(i)]
-                print(judge_type)
                 result_value = self.__response_with_key(self.response_content, judge_key)
-                print(result_value)
+
 
                 expect_value, result_value = self.__type_handle(
                     expect_value=expect_value, result_value=result_value, judge_type=judge_type)
@@ -279,13 +282,9 @@ class TestApi(unittest.TestCase):
 
             res, result_value = self.__type_handle(expect_value=res, result_value=result_value, judge_type=judge_type)
             try:
-                print(res)
-                print(result_value)
                 assert res == result_value
-                print("python pass")
             except:
                 re_flag = False
-                print("python error")
                 allure.attach("脚本返回值不等于结果", "脚本返回值:%s  不等于 result_value:%s" % (str(res), str(result_value)))
 
         return re_flag
@@ -297,11 +296,15 @@ class TestApi(unittest.TestCase):
         file_index = file.find("_")
         case_num = file[4:file_index]
 
-        api_index = path.rfind("/")
-        api_num = path[api_index+1:]
+        env_index = path.rfind("/")
+        env_num = path[env_index+1:]
 
-        project_path = path[:api_index]
+        api_path = path[:env_index]
+        api_index = api_path.rfind("/")
+        api_num = api_path[api_index+1:]
+
+        project_path = api_path[:api_index]
         project_index = project_path.rfind("/")
         project_num = project_path[project_index+1:]
 
-        return project_num, api_num, case_num
+        return project_num, api_num, env_num, case_num

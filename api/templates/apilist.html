@@ -42,7 +42,7 @@
                 <td style="text-align: center">
                     <a href="/api/project{{ project_obj.id }}/api{{  form.id.value  }}/doc">文</a>
                     <a href="/api/project{{ project_obj.id }}/api{{  form.id.value  }}/debug">调</a>
-                    <a href="/api/project{{ project_obj.id }}/api{{  form.id.value  }}/test">测</a>
+                    <a href="/api/project{{ project_obj.id }}/api{{  form.id.value  }}/test/{{ env_default }}">测</a>
                 </td>
             </tr>
         {% endfor %}

@@ -11,5 +11,5 @@ urlpatterns = [
     url(r'^project(?P<projectId>[a-z,A-Z,{,},.,0-9,:,%,-]+)/config/$', views.project_config, name="project_config"),
     url(r'^project(?P<projectId>[a-z,A-Z,{,},.,0-9,:,%,-]+)/api(?P<apiId>[a-z,A-Z,{,},.,0-9,:,%,-]+)/doc/$', views.api_doc, name="api_doc"),
     url(r'^project(?P<projectId>[a-z,A-Z,{,},.,0-9,:,%,-]+)/api(?P<apiId>[a-z,A-Z,{,},.,0-9,:,%,-]+)/debug/$', views.api_debug, name="api_debug"),
-    url(r'^project(?P<projectId>[a-z,A-Z,{,},.,0-9,:,%,-]+)/api(?P<apiId>[a-z,A-Z,{,},.,0-9,:,%,-]+)/test/$', views.api_test, name="api_test"),
+    url(r'^project(?P<projectId>[a-z,A-Z,{,},.,0-9,:,%,-]+)/api(?P<apiId>[a-z,A-Z,{,},.,0-9,:,%,-]+)/test/(?P<envId>[a-z,A-Z,{,},.,0-9,:,%,-]+)$', views.api_test, name="api_test"),
 ]

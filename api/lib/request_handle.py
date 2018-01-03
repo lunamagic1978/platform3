@@ -45,8 +45,16 @@ class requestHandle():
                     self.payload = "%s=%s" % (body, body_value)
 
     def request_send(self):
-        url = "%s://%s:%s%s" % (self.request_protocol, self.host, self.port, self.url)
-        response_data = requests.request(method=self.request_method, url=url, params=self.params, headers=self.headers, data=self.payload)
+        if self.port == "80":
+            url = "%s://%s:%s" % (self.request_protocol, self.host, self.url)
+        else:
+            url = "%s://%s:%s%s" % (self.request_protocol, self.host, self.port, self.url)
+        if self.request_protocol == "HTTP":
+            response_data = requests.request(method=self.request_method, url=url, params=self.params, headers=self.headers, data=self.payload)
+        else:
+            response_data = requests.request(method=self.request_method, url=url, params=self.params,
+                                             headers=self.headers, data=self.payload, verify=False)
+
         return response_data
 
 
