@@ -75,12 +75,12 @@ class TestApi(unittest.TestCase):
         case_request.set_case_params(params=params)
         bodys = self.bodys_fix(self.test_obj.TestBodys)
         case_request.set_case_bodys(payload=bodys)
-        print("request_params: %s" % params)
-        print("request_bodys: %s" % bodys)
+        # print("request_params: %s" % params)
+        # print("request_bodys: %s" % bodys)
         start_time = time()
         response = case_request.request_send()
         end_time = time()
-        print("request_content: %s" % response.content)
+        # print("request_content: %s" % response.content)
 
         self.test_obj.Response_code = response.status_code
         self.test_obj.Response_time = int((end_time - start_time) * 1000)
@@ -105,7 +105,6 @@ class TestApi(unittest.TestCase):
         allure.attach("response_content", str(response.text))
 
         try:
-            print(type(response.content))
             self.response_content = json.loads(response.content.decode('utf-8'))
         except:
             print("response_content can not json loads")
@@ -286,6 +285,10 @@ class TestApi(unittest.TestCase):
 
 
             res, result_value = self.__type_handle(expect_value=res, result_value=result_value, judge_type=judge_type)
+            print("------------------")
+            print(res)
+            print(result_value)
+            print("------------------")
             try:
                 assert res == result_value
             except:
