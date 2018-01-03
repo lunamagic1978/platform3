@@ -51,3 +51,6 @@ platform3/__pycache__/
 platform3/settings.pyc
 platform3/urls.pyc
 platform3/wsgi.pyc
+api/testcase/1/1/__pycache__/
+api/testcase/1/__pycache__/
+

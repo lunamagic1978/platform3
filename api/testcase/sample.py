@@ -27,17 +27,19 @@ class TestApi(unittest.TestCase):
         print(type(envId))
         base_path = os.path.join(os.getcwd(), "api/upload")
         script_path = os.path.join(base_path, str(apiId))
+        print(script_path)
         try:
-            setup_script_query = ApiScript.objects.filter(apiId=apiId)
+            setup_script_query = ApiScript.objects.filter(apiId=apiId, ScriptTpye="setupScript")
 
             for script in setup_script_query:
                 script_file = os.path.join(script_path, script.ScriptName)
                 try:
                     script_name = "api.upload.api%s.%s" % (str(apiId), script.ScriptName[:-3])
+                    print(script_name)
                     setup_script = importlib.import_module(script_name)
                     setup_script.run()
                 except Exception:
-                    print("apiId:%s caseId:%s have error when run script_file: %s" %(apiId, caseId, script_file))
+                    print("apiId:%s caseId:%s have error when run setup script_file: %s" %(apiId, caseId, script_file))
         except:
             print("apiId:%s caseId:%s have not setup script" % (apiId, caseId))
 
