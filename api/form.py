@@ -246,7 +246,6 @@ class Case(forms.Form):
                 response_content = eval(case_data.Response_content, globals)
             except:
                 print("create response_content failed")
-                print(case_data.Response_content)
                 response_content = {}
 
             try:
