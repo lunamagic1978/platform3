@@ -64,6 +64,30 @@ class TestCaseHandle():
             _re_dict[key_name] = _data[key_name]
         return _re_dict
 
+    def parmas_type_handle(self, api_params):
+        _data = self.data
+        _re_dict = {}
+        for key in api_params:
+            temp = "param_type_%s" % key.key
+            try:
+                params_type = _data[temp]
+                _re_dict[temp] = params_type
+            except:
+                print("params_type_handle error :no params_type_%s in data" % key.key)
+        return _re_dict
+
+    def bodys_type_handle(self, api_bodys):
+        _data = self.data
+        _re_dict = {}
+        for key in api_bodys:
+            temp = "body_type_%s" % key.body
+            try:
+                params_type = _data[temp]
+                _re_dict[temp] = params_type
+            except:
+                print("bodys_type_handle error :no bodys_type_%s in data" % key.body)
+        return _re_dict
+
 class JudgeCaseHandle():
 
     def __init__(self, except_content, response_content, params_dict):

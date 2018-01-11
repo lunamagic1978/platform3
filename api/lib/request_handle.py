@@ -13,6 +13,7 @@ class requestHandle():
         except:
             print("环境配置不存在")
 
+        self.s = requests.session()
         self.host = obj.envHost
         self.url = api_obj.url
         self.request_method = api_obj.request_method
@@ -21,23 +22,35 @@ class requestHandle():
         self.port = obj.envPort
         self.params = {}
         self.payload = None
-        self.headers = eval(obj.envHeaders)
+        self.s.headers.update(eval(obj.envHeaders))
+        self.request_dict = {}
 
     def set_params(self, key, value):
         if value:
             self.params[key] = value
 
+    def update_case_request_dict(self, content):
+        self.request_dict = {**self.request_dict, **content}
+        return self.request_dict
+
+    def update_case_header(self, headers):
+        self.s.headers.update(headers)
+
+    def update_case_cookie(self, cookie):
+        self.s.cookies.update(cookie)
+
     def set_case_params(self, params):
         self.params = params
 
+
     def set_case_bodys(self, payload):
         if self.post_method == "x-www-form-urlencoded":
-            self.headers['content-type'] = "application/x-www-form-urlencoded"
+            self.s.headers.update({'content-type': "application/x-www-form-urlencoded"})
         self.payload = payload
 
     def set_bodys(self, body, body_value):
         if self.post_method == "x-www-form-urlencoded":
-            self.headers['content-type'] = "application/x-www-form-urlencoded"
+            self.s.headers.update({'content-type': "application/x-www-form-urlencoded"})
             if body_value:
                 if self.payload:
                     self.payload = self.payload + "&%s=%s" % (body, body_value)
@@ -45,16 +58,15 @@ class requestHandle():
                     self.payload = "%s=%s" % (body, body_value)
 
     def request_send(self):
+        re_payload = "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"userCode\"\r\n\r\nxumin_test07\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"realName\"\r\n\r\n徐旻\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"password\"\r\n\r\n111111\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"status\"\r\n\r\n1\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"userType\"\r\n\r\n0\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--"
         if self.port == "80":
             url = "%s://%s:%s" % (self.request_protocol, self.host, self.url)
         else:
             url = "%s://%s:%s%s" % (self.request_protocol, self.host, self.port, self.url)
         if self.request_protocol == "HTTP":
-            response_data = requests.request(method=self.request_method, url=url, params=self.params, headers=self.headers, data=self.payload)
+            response_data = self.s.request(method=self.request_method, url=url, params=self.params, data=self.payload)
         else:
-            response_data = requests.request(method=self.request_method, url=url, params=self.params,
-                                             headers=self.headers, data=self.payload, verify=False)
-
+            response_data = self.s.request(method=self.request_method, url=url, params=self.params, data=re_payload, verify=False)
         return response_data
 
 

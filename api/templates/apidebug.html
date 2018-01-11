@@ -4,6 +4,7 @@
 {% block head_script %}
 	<link href="{{ STATIC_URL }}css/jsonTree.css" rel="stylesheet">
     <script src="{{ STATIC_URL }}js/jsonTree.js"></script>
+
 {% endblock %}
 
 {% block breadcrumb_button %}
@@ -128,8 +129,6 @@
 
 </div>
 
-
-
     <script>
             // Get DOM-element for inserting json-tree
             var wrapper = document.getElementById("wrapper");
@@ -139,6 +138,7 @@
             };
 
             // or from a string by JSON.parse(str) method
+            console.log({{ response_data|safe }})
             var dataStr = {{ response_data|safe }};
             dataStr = JSON.stringify(dataStr);
             console.log(dataStr)

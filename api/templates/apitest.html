@@ -75,9 +75,9 @@
             <tr>
                 <td rowspan="4" style="min-width: 10px; max-width: 20px; word-wrap: break-word;">{{  form.ORDER }}</td>
                 {% for item in form %}
-                    {% ifequal  item.name|slice:":5" "param" %}
+                    {% ifequal  item.name|slice:":6" "params" %}
 
-                            <td rowspan="4" style="min-width: 20px; max-width: 65px; word-wrap: break-word">{{ item }}</td>
+                        <td rowspan="2" style="min-width: 20px; max-width: 65px; word-wrap: break-word">{{ item }}</td>
                     {% endifequal %}
 
                 {% endfor %}
@@ -85,7 +85,7 @@
                 {% for item in form %}
                     {% ifequal  item.name|slice:":5" "bodys" %}
 
-                            <td rowspan="4" style="min-width: 20px; max-width: 65px; word-wrap: break-word">{{ item }}</td>
+                            <td rowspan="2" style="min-width: 20px; max-width: 65px; word-wrap: break-word">{{ item }}</td>
                     {% endifequal %}
 
                 {% endfor %}
@@ -118,6 +118,21 @@
                 <td></td>
             </tr>
             <tr>
+                {% for item in form %}
+                    {% ifequal  item.name|slice:":10" "param_type" %}
+
+                        <td rowspan="2" style="min-width: 20px; max-width: 65px; word-wrap: break-word">{{ item }}</td>
+                    {% endifequal %}
+
+                {% endfor %}
+
+                {% for item in form %}
+                    {% ifequal  item.name|slice:":9" "body_type" %}
+
+                            <td rowspan="2" style="min-width: 20px; max-width: 65px; word-wrap: break-word">{{ item }}</td>
+                {% endifequal %}
+
+                {% endfor %}
                 {% for item in form %}
                     {% ifequal  item.name|slice:":17" "result_judge_type" %}
 

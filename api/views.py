@@ -165,6 +165,7 @@ def api_debug(request, projectId, apiId):
             response_data = requestHandle.request_send()
             CustomApiParamsInlineForm = debugFactory.debugParams_formsets()
             CustomApiBodyInlineForm = debugFactory.debugBodys_formsets()
+            print(response_data.content)
             ctx = {'username': username,
                    'project_obj': project_obj,
                    'api_obj': api_obj,
@@ -235,7 +236,9 @@ def api_test(request, projectId, apiId, envId):
                 del temp_result_key_type['codetype']
                 del temp_result_key_type['timetype']
                 try:
-                    case_formet_POST_SAVE.save(datas=temp, apiId=api_obj, result_key=temp_result_key, result_key_type=temp_result_key_type, env_id=envId)
+                    case_formet_POST_SAVE.save(datas=temp, apiId=api_obj, result_key=temp_result_key,
+                                               result_key_type=temp_result_key_type, env_id=envId, api_bodys=api_bodys,
+                                               api_params=api_params)
                     new_obj_test = ApiTest.objects.filter(apiId=apiId, env_id=envId).values()
                     case_handle.create_case(projectId=projectId, apiId=apiId, case_num=len(new_obj_test),
                                             project_name=project_obj.name, api_name=api_obj.apiName, env_id=envId)
@@ -253,7 +256,9 @@ def api_test(request, projectId, apiId, envId):
                 del temp_result_key_type['codetype']
                 del temp_result_key_type['timetype']
                 try:
-                    case_formet_POST_SAVE.save(datas=temp, apiId=api_obj, result_key=temp_result_key, result_key_type=temp_result_key_type, env_id=envId)
+                    case_formet_POST_SAVE.save(datas=temp, apiId=api_obj, result_key=temp_result_key,
+                                               result_key_type=temp_result_key_type, env_id=envId, api_bodys=api_bodys,
+                                               api_params=api_params)
                     new_obj_test = ApiTest.objects.filter(apiId=apiId, env_id=envId).values()
                     case_handle.create_case(projectId=projectId, apiId=apiId, case_num=len(new_obj_test),
                                             project_name=project_obj.name, api_name=api_obj.apiName, env_id=envId)

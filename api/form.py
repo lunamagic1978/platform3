@@ -40,6 +40,12 @@ LOGIC_CHOICE = (('=', '='),
                ('python', 'python'),
                ('in', 'in'),)
 
+PARAMS_TYPE = (("normal", "normal"),
+               ("params", "params"),)
+
+BODYS_TYPE = (("normal", "normal"),
+               ("params", "params"),)
+
 
 class createProject(ModelForm):
 
@@ -258,6 +264,16 @@ class Case(forms.Form):
             except:
                 judge_tpye_content = {}
 
+            try:
+                params_type = eval(case_data.TestParams_type)
+            except:
+                params_type = {}
+
+            try:
+                bodys_type = eval(case_data.TestBodys_type)
+            except:
+                bodys_type = {}
+
 
             if case_data_flag: #根据case_data_flag 判断是否有测试用例
                 try:
@@ -285,6 +301,13 @@ class Case(forms.Form):
                 if fields_name in params_dict.keys():
                     self.fields[fields_name].initial = params_dict[fields_name]
 
+                fields_type = 'param_type_' + item.key
+                self.fields[fields_type] = forms.ChoiceField(choices=PARAMS_TYPE)
+                self.fields[fields_type].widget.attrs["style"] = "width:100%;"
+                if fields_type in params_type.keys():
+                    self.fields[fields_type].initial = params_type[fields_type]
+
+
             for item in bodys_query:
                 fields_name = 'bodys_' + item.body
                 self.fields[fields_name] = forms.CharField()
@@ -292,6 +315,12 @@ class Case(forms.Form):
                 self.fields[fields_name].required = False
                 if fields_name in bodys_dict.keys():
                     self.fields[fields_name].initial = bodys_dict[fields_name]
+
+                fields_type = 'body_type_' + item.body
+                self.fields[fields_type] = forms.ChoiceField(choices=BODYS_TYPE)
+                self.fields[fields_type].widget.attrs["style"] = "width:100%;"
+                if fields_type in bodys_type.keys():
+                    self.fields[fields_type].initial = bodys_type[fields_type]
 
 
 
@@ -444,23 +473,6 @@ class Case(forms.Form):
                 self.fields[judge_type].widget.attrs["style"] = "width:100%;"
 
 
-        # if except_content != "{}" and response_content != "{}":
-        #     judge_case_handle = testcase_handle.JudgeCaseHandle(except_content=except_content, response_content=response_content, params_dict=params_dict)
-        #     for key in result_key_dict.keys():
-        #         if result_key_dict[key]:
-        #             try:
-        #                 flag, resopnse_value = judge_case_handle.judge_by_key(key=result_key_dict[key], value=key, apiId=apiId,
-        #                         key_type=result_key_type_dict[key + 'type'], logic=judge_logic_dict['result_judge_logic_' + key])
-        #
-        #                 if flag:
-        #                     self.fields['result_response_' + key].widget.attrs["style"] = "width:100%;  background: aquamarine"
-        #                     self.fields['result_response_' + key].initial = resopnse_value
-        #                 else:
-        #                     self.fields['result_response_' + key].widget.attrs["style"] = "width:100%;  background: #FFE4E1"
-        #                     self.fields['result_response_' + key].initial = resopnse_value
-        #             except Exception:
-        #                 pass
-
 class ORDER_FIXED(BaseFormSet):
 
     def add_fields(self, form, index):
@@ -478,13 +490,11 @@ class ORDER_FIXED(BaseFormSet):
         if self.can_delete:
             form.fields['DELETE'] = BooleanField(label='DELETE', required=False)
 
-    def save(self, datas, apiId, result_key, result_key_type, env_id):
-        print(env_id)
+    def save(self, datas, apiId, result_key, result_key_type, env_id, api_bodys, api_params):
         result_key_obj = ApiTestResultKey.objects.get_or_create(apiId=apiId)[0]
         result_key_obj.Result_key = result_key
         result_key_obj.Result_key_type = result_key_type
         result_key_obj.save()
-
         for data in datas:
             case_num = data['ORDER']
             testcase_data = testcase_handle.TestCaseHandle(data)
@@ -495,6 +505,8 @@ class ORDER_FIXED(BaseFormSet):
             new_except_content = testcase_data.except_content_hanele(result_key_dict=result_key)
             new_judge_logic = testcase_data.judge_logic_handle()
             new_judge_type = testcase_data.judge_logic_type_handle()
+            parmas_type = testcase_data.parmas_type_handle(api_params=api_params)
+            bodys_type = testcase_data.bodys_type_handle(api_bodys=api_bodys)
             obj = ApiTest.objects.get_or_create(apiId=apiId, CaseNum=case_num, env_id=env_id)[0]
             obj.TestParams = params_dict
             obj.TestBodys = bodys_dict
@@ -504,12 +516,16 @@ class ORDER_FIXED(BaseFormSet):
             obj.Judge_type = new_judge_type
             obj.Except_content = new_except_content
             obj.env_id = env_id
+            obj.TestParams_type = parmas_type
+            obj.TestBodys_type = bodys_type
             obj.save()
 
 
 class Script(ModelForm):
     ScriptTpye = forms.ChoiceField(choices=(("normalScript", "normalScript"),
-                                            ("setupScript", "setupScript"),))
+                                            ("setupScript", "setupScript"),
+                                            ("teardownScript", "teardownScript"),
+                                            ("headerScript", "headerScript"),))
     class Meta:
         model = ApiScript
 

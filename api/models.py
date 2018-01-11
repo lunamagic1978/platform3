@@ -56,7 +56,7 @@ class ApiParams(models.Model):
     key_selected = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.apiId
+        return str(self.apiId)
 
 
 class ApiBody(models.Model):
@@ -70,7 +70,7 @@ class ApiBody(models.Model):
     body_selected = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.apiId
+        return str(self.apiId)
 
 
 class ApiDebug(models.Model):
@@ -86,7 +86,9 @@ class ApiTest(models.Model):
     env = models.ForeignKey(env, on_delete=models.CASCADE)
     TestHead = models.CharField(max_length=1000, blank=True, null=True)
     TestParams = models.CharField(max_length=1000, blank=True, null=True)
+    TestParams_type = models.CharField(max_length=1000, blank=True, null=True, default='{}')
     TestBodys = models.CharField(max_length=1000, blank=True, null=True)
+    TestBodys_type = models.CharField(max_length=1000, blank=True, null=True, default='{}')
     Response_code = models.CharField(max_length=10, blank=True, null=True)
     Response_time = models.CharField(max_length=100, blank=True, null=True)
     Response_content = models.TextField(blank=True, null=True)

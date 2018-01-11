@@ -20,28 +20,13 @@ class TestApi(unittest.TestCase):
     def setUp(self):
 
         self.project_id, self.apiId, self.env, self.caseId = self.get_project_api_case_num()
+        self.request_dict = {}
         apiId = self.apiId
         caseId = self.caseId
         envId = self.env
-        print("env %s" %envId)
-        print(type(envId))
         base_path = os.path.join(os.getcwd(), "api/upload")
         script_path = os.path.join(base_path, str(apiId))
-        print(script_path)
-        try:
-            setup_script_query = ApiScript.objects.filter(apiId=apiId, ScriptTpye="setupScript")
 
-            for script in setup_script_query:
-                script_file = os.path.join(script_path, script.ScriptName)
-                try:
-                    script_name = "api.upload.api%s.%s" % (str(apiId), script.ScriptName[:-3])
-                    print(script_name)
-                    setup_script = importlib.import_module(script_name)
-                    setup_script.run()
-                except Exception:
-                    print("apiId:%s caseId:%s have error when run setup script_file: %s" %(apiId, caseId, script_file))
-        except:
-            print("apiId:%s caseId:%s have not setup script" % (apiId, caseId))
 
 
         try:
@@ -71,10 +56,45 @@ class TestApi(unittest.TestCase):
             print("no env")
 
         case_request = request_handle.requestHandle(project_obj=self.project_obj, api_obj=self.api_obj, project_env=self.env_obj.envName)
-        params = self.params_fix(self.test_obj.TestParams)
+
+
+        try:
+            setup_script_query = ApiScript.objects.filter(apiId=apiId, ScriptTpye="setupScript")
+
+            for script in setup_script_query:
+                script_file = os.path.join(script_path, script.ScriptName)
+                try:
+                    script_name = "api.upload.api%s.%s" % (str(apiId), script.ScriptName[:-3])
+                    setup_script = importlib.import_module(script_name)
+                    request_dict = setup_script.run(params=eval(self.test_obj.TestParams), bodys=eval(self.test_obj.TestBodys))
+                    self.request_dict = case_request.update_case_request_dict(request_dict)
+                except Exception:
+                    print("apiId:%s caseId:%s have error when run setup script_file: %s" %(apiId, caseId, script_file))
+        except:
+            print("apiId:%s caseId:%s have not setup script" % (apiId, caseId))
+
+        try:
+            setup_script_query = ApiScript.objects.filter(apiId=apiId, ScriptTpye="headerScript")
+
+            for script in setup_script_query:
+                script_file = os.path.join(script_path, script.ScriptName)
+                try:
+                    script_name = "api.upload.api%s.%s" % (str(apiId), script.ScriptName[:-3])
+                    header_script = importlib.import_module(script_name)
+                    headers, cookies, request_dict = header_script.run()
+                    case_request.update_case_header(headers)
+                    case_request.update_case_cookie(cookies)
+                    self.request_dict = case_request.update_case_request_dict(request_dict)
+                except Exception:
+                    print("apiId:%s caseId:%s have error when run header script_file: %s" %(apiId, caseId, script_file))
+        except:
+            print("apiId:%s caseId:%s have not setup script" % (apiId, caseId))
+
+        params = self.params_fix(self.test_obj.TestParams, self.test_obj.TestParams_type)
         case_request.set_case_params(params=params)
-        bodys = self.bodys_fix(self.test_obj.TestBodys)
+        bodys = self.bodys_fix(self.test_obj.TestBodys, case_request)
         case_request.set_case_bodys(payload=bodys)
+
         # print("request_params: %s" % params)
         # print("request_bodys: %s" % bodys)
         start_time = time()
@@ -113,6 +133,7 @@ class TestApi(unittest.TestCase):
     @allure.story('321')
     def test_case(self):
         flag = True
+        print("request_dict in test_case: %s" % self.request_dict)
         judge_result_dict = {}
         for key in self.result_key.keys():
             if self.result_key[key]:
@@ -121,7 +142,7 @@ class TestApi(unittest.TestCase):
                 try:
                     expect_value = self.except_content["result_expect_value" + str(i)]
                 except:
-                    print("apiId:%s caseId:%s no have expect_value" % (self.apiId, self.caseId))
+                    print("apiId:%s caseId:%s no have expect_value%s" % (self.apiId, self.caseId, str(i)))
                 judge_logic = self.judge_logic["result_judge_logic_value" + str(i)]
                 judge_type = self.judge_type["result_judge_type" + str(i)]
                 result_value = self.__response_with_key(self.response_content, judge_key)
@@ -144,13 +165,43 @@ class TestApi(unittest.TestCase):
         assert flag == True
 
     def tearDown(self):
-        pass
+        apiId = self.apiId
+        caseId = self.caseId
+        envId = self.env
+        base_path = os.path.join(os.getcwd(), "api/upload")
+        script_path = os.path.join(base_path, str(apiId))
+        try:
+            setup_script_query = ApiScript.objects.filter(apiId=apiId, ScriptTpye="teardownScript")
 
-    def params_fix(self, case_params):
+            for script in setup_script_query:
+                script_file = os.path.join(script_path, script.ScriptName)
+                print(script_file)
+                try:
+                    script_name = "api.upload.api%s.%s" % (str(apiId), script.ScriptName[:-3])
+                    setup_script = importlib.import_module(script_name)
+                    setup_script.run()
+                except Exception:
+                    print("apiId:%s caseId:%s have error when run teardown script_file: %s" %(apiId, caseId, script_file))
+        except:
+            print("apiId:%s caseId:%s have not setup script" % (apiId, caseId))
+
+    def params_fix(self, case_params, case_params_type):
         re_dict = {}
         params = eval(case_params)
+        params_type = eval(case_params_type)
         for key in params.keys():
-            re_dict[key[7:]] = params[key]
+            temp = 'param_type_%s' % key[7:]
+            if params_type[temp] == "normal":
+                re_dict[key[7:]] = params[key]
+            elif params_type[temp] == "params":
+                temp_key = params[key]
+                try:
+                    re_dict[key[7:]] = self.request_dict[temp_key]
+                except:
+                    print("in params_fix error, no find value for params :%s" % params[key])
+            else:
+                pass
+
         return re_dict
 
     def bodys_fix_dict(self, case_bodys):
@@ -161,7 +212,7 @@ class TestApi(unittest.TestCase):
         return re_dict
 
 
-    def bodys_fix(self, case_bodys):
+    def bodys_fix(self, case_bodys, case_request):
         re_payload = None
         if self.api_obj.post_method == "x-www-form-urlencoded":
             bodys = eval(case_bodys)
@@ -172,7 +223,19 @@ class TestApi(unittest.TestCase):
                     else:
                         re_payload = "%s=%s" % (key[6:], bodys[key])
             return re_payload
-        return re_payload
+        elif self.api_obj.post_method == "form-data":
+            case_request.update_case_header({'content-type': "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",})
+            bodys = eval(case_bodys)
+            for key in bodys.keys():
+                if re_payload:
+                    re_payload = re_payload + "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n" % (key[6:], bodys[key])
+                else:
+                    re_payload = "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n" % (key[6:], bodys[key])
+            re_payload = re_payload + "------WebKitFormBoundary7MA4YWxkTrZu0gW--"
+
+            return re_payload
+        else:
+            return re_payload
 
     def __response_with_key(self, json_data, json_key):
         key_list = []
@@ -285,10 +348,6 @@ class TestApi(unittest.TestCase):
 
 
             res, result_value = self.__type_handle(expect_value=res, result_value=result_value, judge_type=judge_type)
-            print("------------------")
-            print(res)
-            print(result_value)
-            print("------------------")
             try:
                 assert res == result_value
             except:
