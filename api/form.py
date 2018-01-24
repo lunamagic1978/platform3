@@ -440,12 +440,23 @@ class Case(forms.Form):
                 self.fields[fields_name].widget.attrs["style"] = "width:100%;"
                 self.fields[fields_name].required = False
 
+                fields_type = 'param_type_' + item.key
+                self.fields[fields_type] = forms.ChoiceField(choices=PARAMS_TYPE)
+                self.fields[fields_type].widget.attrs["style"] = "width:100%;"
+
+
             bodys_list = ApiBody.objects.filter(apiId=apiId)
             for item in bodys_list:
                 fields_name = 'bodys_' + item.body
                 self.fields[fields_name] = forms.CharField()
                 self.fields[fields_name].widget.attrs["style"] = "width:100%;"
                 self.fields[fields_name].required = False
+
+                fields_type = 'body_type_' + item.body
+                self.fields[fields_type] = forms.ChoiceField(choices=BODYS_TYPE)
+                self.fields[fields_type].widget.attrs["style"] = "width:100%;"
+
+
 
             self.fields['result_expect_code'].widget.attrs["style"] = "width:100%;"
             self.fields['result_expect_time'].widget.attrs["style"] = "width:100%;"
@@ -491,34 +502,52 @@ class ORDER_FIXED(BaseFormSet):
             form.fields['DELETE'] = BooleanField(label='DELETE', required=False)
 
     def save(self, datas, apiId, result_key, result_key_type, env_id, api_bodys, api_params):
+        flag_del = False
         result_key_obj = ApiTestResultKey.objects.get_or_create(apiId=apiId)[0]
         result_key_obj.Result_key = result_key
         result_key_obj.Result_key_type = result_key_type
         result_key_obj.save()
         for data in datas:
             case_num = data['ORDER']
-            testcase_data = testcase_handle.TestCaseHandle(data)
-            params_dict = testcase_data.params_handle()
-            bodys_dict =testcase_data.body_handle()
-            new_code = testcase_data.code_handle()
-            new_time = testcase_data.time_handle()
-            new_except_content = testcase_data.except_content_hanele(result_key_dict=result_key)
-            new_judge_logic = testcase_data.judge_logic_handle()
-            new_judge_type = testcase_data.judge_logic_type_handle()
-            parmas_type = testcase_data.parmas_type_handle(api_params=api_params)
-            bodys_type = testcase_data.bodys_type_handle(api_bodys=api_bodys)
-            obj = ApiTest.objects.get_or_create(apiId=apiId, CaseNum=case_num, env_id=env_id)[0]
-            obj.TestParams = params_dict
-            obj.TestBodys = bodys_dict
-            obj.Except_code = new_code
-            obj.Except_time = new_time
-            obj.Judge_logic = new_judge_logic
-            obj.Judge_type = new_judge_type
-            obj.Except_content = new_except_content
-            obj.env_id = env_id
-            obj.TestParams_type = parmas_type
-            obj.TestBodys_type = bodys_type
-            obj.save()
+            if data['DELETE']:
+                try:
+                    ApiTest.objects.get(env_id=env_id, CaseNum=case_num).delete()
+                    flag_del = True
+                except Exception:
+                    print("delete case error")
+            else:
+                testcase_data = testcase_handle.TestCaseHandle(data)
+                params_dict = testcase_data.params_handle()
+                bodys_dict =testcase_data.body_handle()
+                new_code = testcase_data.code_handle()
+                new_time = testcase_data.time_handle()
+                new_except_content = testcase_data.except_content_hanele(result_key_dict=result_key)
+                new_judge_logic = testcase_data.judge_logic_handle()
+                new_judge_type = testcase_data.judge_logic_type_handle()
+                parmas_type = testcase_data.parmas_type_handle(api_params=api_params)
+                bodys_type = testcase_data.bodys_type_handle(api_bodys=api_bodys)
+                obj = ApiTest.objects.get_or_create(apiId=apiId, CaseNum=case_num, env_id=env_id)[0]
+                obj.TestParams = params_dict
+                obj.TestBodys = bodys_dict
+                obj.Except_code = new_code
+                obj.Except_time = new_time
+                obj.Judge_logic = new_judge_logic
+                obj.Judge_type = new_judge_type
+                obj.Except_content = new_except_content
+                obj.env_id = env_id
+                obj.TestParams_type = parmas_type
+                obj.TestBodys_type = bodys_type
+                obj.save()
+        if flag_del:
+            objs = ApiTest.objects.filter(env_id=env_id)
+            i = 1
+            for case in objs:
+                try:
+                    case.CaseNum = i
+                    case.save()
+                    i = i + 1
+                except Exception:
+                    print("fix case_num error")
 
 
 class Script(ModelForm):
