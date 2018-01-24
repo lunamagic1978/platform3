@@ -511,7 +511,10 @@ class ORDER_FIXED(BaseFormSet):
             case_num = data['ORDER']
             if data['DELETE']:
                 try:
-                    ApiTest.objects.get(env_id=env_id, CaseNum=case_num).delete()
+                    print(apiId.pk)
+                    print(case_num)
+                    print(env_id)
+                    ApiTest.objects.get(env_id=env_id, CaseNum=case_num, apiId_id=apiId.pk).delete()
                     flag_del = True
                 except Exception:
                     print("delete case error")
@@ -539,7 +542,7 @@ class ORDER_FIXED(BaseFormSet):
                 obj.TestBodys_type = bodys_type
                 obj.save()
         if flag_del:
-            objs = ApiTest.objects.filter(env_id=env_id)
+            objs = ApiTest.objects.filter(env_id=env_id, apiId_id=apiId.pk)
             i = 1
             for case in objs:
                 try:
